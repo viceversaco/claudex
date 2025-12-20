@@ -51,9 +51,16 @@ function QuestionCard({
   return (
     <div className="rounded-lg border border-border bg-surface-secondary/50 p-3 dark:border-border-dark dark:bg-surface-dark-secondary/50">
       <div className="mb-2 flex items-center justify-between">
-        <span className="inline-flex items-center rounded-full bg-brand-100 px-2 py-0.5 text-2xs font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
-          {question.header || `Question ${questionIndex + 1}`}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-flex items-center rounded-full bg-brand-100 px-2 py-0.5 text-2xs font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
+            {question.header || `Question ${questionIndex + 1}`}
+          </span>
+          {question.multiSelect && (
+            <span className="inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-2xs font-medium text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+              Multi-select
+            </span>
+          )}
+        </div>
         {totalQuestions > 1 && (
           <span className="text-2xs text-text-tertiary dark:text-text-dark-tertiary">
             {questionIndex + 1}/{totalQuestions}
@@ -61,14 +68,9 @@ function QuestionCard({
         )}
       </div>
 
-      <p className="mb-1 text-sm text-text-primary dark:text-text-dark-primary">
+      <p className="mb-3 text-sm text-text-primary dark:text-text-dark-primary">
         {question.question}
       </p>
-      {question.multiSelect && (
-        <p className="mb-2 text-2xs text-text-tertiary dark:text-text-dark-tertiary">
-          Select all that apply
-        </p>
-      )}
 
       {question.options && question.options.length > 0 && (
         <div className="space-y-1.5">
