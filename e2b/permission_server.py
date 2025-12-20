@@ -139,7 +139,9 @@ async def handle_call_tool(
                         # Convert array answers to comma-separated strings (AskUserQuestion expects Record<string, string>)
                         string_answers = {}
                         for key, value in user_answers.items():
-                            string_answers[key] = ", ".join(value) if isinstance(value, list) else value
+                            string_answers[key] = (
+                                ", ".join(value) if isinstance(value, list) else value
+                            )
                         # Pass answers in updatedInput for AskUserQuestion
                         response = {
                             "behavior": "allow",

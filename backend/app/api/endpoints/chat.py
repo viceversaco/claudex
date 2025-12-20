@@ -639,11 +639,15 @@ async def respond_to_permission(
                 # user response" state. By publishing the denied message, we wake up E2B's
                 # waiting call immediately, allowing it to fail the tool right away.
                 try:
-                    expired_response = json.dumps({
-                        "approved": False,
-                        "alternative_instruction": "Permission request expired. Please try again.",
-                    })
-                    channel = REDIS_KEY_PERMISSION_RESPONSE.format(request_id=request_id)
+                    expired_response = json.dumps(
+                        {
+                            "approved": False,
+                            "alternative_instruction": "Permission request expired. Please try again.",
+                        }
+                    )
+                    channel = REDIS_KEY_PERMISSION_RESPONSE.format(
+                        request_id=request_id
+                    )
                     await redis.publish(channel, expired_response)
                 except Exception as e:
                     logger.warning("Failed to publish expired message: %s", e)
