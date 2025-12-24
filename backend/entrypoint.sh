@@ -2,6 +2,16 @@
 
 MODE=${1:-${SERVICE_MODE:-api}}
 
+ensure_docker_network() {
+    if [ -S /var/run/docker.sock ]; then
+        NETWORK_NAME="${DOCKER_NETWORK:-claudex-sandbox-net}"
+        if ! docker network inspect "$NETWORK_NAME" >/dev/null 2>&1; then
+            echo "Creating Docker network: $NETWORK_NAME"
+            docker network create "$NETWORK_NAME" 2>/dev/null || true
+        fi
+    fi
+}
+
 if [ "$MODE" = "migrate" ]; then
     echo "Running database migrations..."
     cd /app && python migrate.py
@@ -14,6 +24,8 @@ if [ "$MODE" = "api" ]; then
 
     echo "Seeding data..."
     cd /app && python seed_data.py
+
+    ensure_docker_network
 
     echo "Starting API server..."
     if [ -S /var/run/docker.sock ]; then
@@ -28,6 +40,7 @@ if [ "$MODE" = "celery-worker" ]; then
     echo "Starting Celery worker..."
     CELERY_CONCURRENCY=${CELERY_CONCURRENCY:-25}
     echo "Celery concurrency set to: $CELERY_CONCURRENCY"
+    ensure_docker_network
     if [ -S /var/run/docker.sock ]; then
         echo "Docker socket detected, running as current user for Docker access..."
         exec celery -A app.core.celery worker --pool=threads --concurrency=$CELERY_CONCURRENCY --loglevel=${LOG_LEVEL:-DEBUG}
