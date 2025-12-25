@@ -619,8 +619,9 @@ class ChatService(BaseDbService[Chat]):
         prev_provider = await ai_model_service.get_model_provider(last_message.model_id)
         if prev_provider in [ModelProvider.OPENROUTER, ModelProvider.ZAI]:
             logger.info(
-                "Session cleaning needed for chat %s: switching from OpenRouter to %s",
+                "Session cleaning needed for chat %s: switching from %s to %s",
                 chat_id,
+                prev_provider,
                 new_provider,
             )
             return True

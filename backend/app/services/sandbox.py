@@ -567,9 +567,14 @@ class SandboxService:
         session_file = f"/home/user/.claude/projects/-home-user/{session_id}.jsonl"
         temp_file = f"{session_file}.tmp"
 
+        # Valid Anthropic signatures are base64-encoded encrypted content, typically 200+ characters.
+        # OpenRouter generates empty signatures (length 0).
+        # ZAI generates short/fake signatures that pass basic checks but fail Anthropic validation.
+        # Using 100 as threshold filters out both while keeping valid Anthropic signatures.
+        min_signature_length = 100
         jq_filter = (
             'if .message.content and (.message.content | type) == "array" then '
-            '.message.content |= [.[] | select((.type | IN("thinking", "redacted_thinking") | not) or ((.signature // "") | length) >= 10)] '
+            f'.message.content |= [.[] | select((.type | IN("thinking", "redacted_thinking") | not) or ((.signature // "") | length) >= {min_signature_length})] '
             "else . end"
         )
 
