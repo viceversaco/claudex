@@ -83,6 +83,7 @@ class LocalDockerProvider(SandboxProvider):
             labels[f"traefik.http.routers.{router_name}.rule"] = f"Host(`{subdomain}`)"
             labels[f"traefik.http.routers.{router_name}.entrypoints"] = "https"
             labels[f"traefik.http.routers.{router_name}.tls"] = "true"
+            labels[f"traefik.http.routers.{router_name}.tls.certresolver"] = "letsencrypt"
             labels[f"traefik.http.routers.{router_name}.service"] = router_name
             labels[f"traefik.http.services.{router_name}.loadbalancer.server.port"] = (
                 str(port)
