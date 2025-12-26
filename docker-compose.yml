@@ -63,6 +63,9 @@ services:
       - SECRET_KEY=${SECRET_KEY:-claudex_default_secret_key_for_development_only}
       - PYTHONUNBUFFERED=1
       - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
+    networks:
+      - default
+      - claudex-sandbox-net
 
   celery-worker:
     build:
@@ -139,3 +142,8 @@ volumes:
     driver: local
   redis_data:
     driver: local
+
+networks:
+  claudex-sandbox-net:
+    name: claudex-sandbox-net
+    driver: bridge
