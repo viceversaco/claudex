@@ -34,6 +34,14 @@ services:
       timeout: 5s
       retries: 5
 
+  sandbox-setup:
+    image: docker:20.10-cli
+    container_name: claudex-sandbox-setup
+    restart: "no"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: sh -c "docker pull ${DOCKER_IMAGE:-ghcr.io/mng-dev-ai/claudex-sandbox:latest}"
+
   api:
     build:
       context: ./backend
@@ -50,6 +58,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      sandbox-setup:
+        condition: service_completed_successfully
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     volumes:
@@ -79,6 +89,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      sandbox-setup:
+        condition: service_completed_successfully
     volumes:
       - ./backend:/app
       - ./storage:/app/storage

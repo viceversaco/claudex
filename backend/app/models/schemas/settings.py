@@ -80,6 +80,7 @@ class UserSettingsBase(BaseModel):
     claude_code_oauth_token: str | None = None
     z_ai_api_key: str | None = None
     openrouter_api_key: str | None = None
+    codex_auth_json: str | None = None
     custom_instructions: str | None = Field(default=None, max_length=1500)
     custom_agents: list[CustomAgent] | None = None
     custom_mcps: list[CustomMcp] | None = None

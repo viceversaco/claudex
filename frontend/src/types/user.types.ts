@@ -84,6 +84,7 @@ export interface UserSettings {
   claude_code_oauth_token: string | null;
   z_ai_api_key: string | null;
   openrouter_api_key: string | null;
+  codex_auth_json: string | null;
   custom_instructions: string | null;
   custom_agents: CustomAgent[] | null;
   custom_mcps: CustomMcp[] | null;

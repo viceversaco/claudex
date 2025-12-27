@@ -72,6 +72,7 @@ const createFallbackSettings = (): UserSettings => ({
   claude_code_oauth_token: null,
   z_ai_api_key: null,
   openrouter_api_key: null,
+  codex_auth_json: null,
   custom_instructions: null,
   custom_agents: null,
   custom_mcps: null,
@@ -93,6 +94,7 @@ const TAB_FIELDS: Record<TabKey, (keyof UserSettings)[]> = {
     'claude_code_oauth_token',
     'z_ai_api_key',
     'openrouter_api_key',
+    'codex_auth_json',
     'auto_compact_disabled',
   ],
   mcp: ['custom_mcps'],
@@ -181,6 +183,7 @@ const SettingsPage: React.FC = () => {
         'claude_code_oauth_token',
         'z_ai_api_key',
         'openrouter_api_key',
+        'codex_auth_json',
         'custom_instructions',
         'custom_agents',
         'custom_mcps',
@@ -389,6 +392,10 @@ const SettingsPage: React.FC = () => {
     persistSettings((prev) => ({ ...prev, auto_compact_disabled: disabled }));
   };
 
+  const handleCodexAuthChange = (content: string | null) => {
+    persistSettings((prev) => ({ ...prev, codex_auth_json: content }));
+  };
+
   const sidebarContent = useMemo(
     () => (
       <Sidebar
@@ -541,6 +548,7 @@ const SettingsPage: React.FC = () => {
                     onNotificationSoundChange={handleNotificationSoundChange}
                     onSandboxProviderChange={handleSandboxProviderChange}
                     onAutoCompactDisabledChange={handleAutoCompactDisabledChange}
+                    onCodexAuthChange={handleCodexAuthChange}
                   />
                 </div>
               )}

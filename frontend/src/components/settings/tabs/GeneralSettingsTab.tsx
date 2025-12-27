@@ -1,6 +1,7 @@
 import { Button, Select, Switch } from '@/components/ui';
 import type { UserSettings, GeneralSecretFieldConfig, ApiFieldKey, SandboxProvider } from '@/types';
 import { SecretInput } from '@/components/settings/inputs/SecretInput';
+import { CodexAuthUpload } from '@/components/settings/inputs/CodexAuthUpload';
 
 interface GeneralSettingsTabProps {
   fields: GeneralSecretFieldConfig[];
@@ -12,6 +13,7 @@ interface GeneralSettingsTabProps {
   onNotificationSoundChange: (enabled: boolean) => void;
   onSandboxProviderChange: (provider: SandboxProvider | null) => void;
   onAutoCompactDisabledChange: (disabled: boolean) => void;
+  onCodexAuthChange: (content: string | null) => void;
 }
 
 export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
@@ -24,6 +26,7 @@ export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
   onNotificationSoundChange,
   onSandboxProviderChange,
   onAutoCompactDisabledChange,
+  onCodexAuthChange,
 }) => (
   <div className="space-y-6">
     <div>
@@ -126,6 +129,23 @@ export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
             checked={settings.auto_compact_disabled ?? false}
             onCheckedChange={onAutoCompactDisabledChange}
           />
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 className="mb-4 text-sm font-medium text-text-primary dark:text-text-dark-primary">
+        OpenAI Codex
+      </h2>
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-sm font-medium text-text-primary dark:text-text-dark-primary">
+            Codex Authentication
+          </h3>
+          <p className="mt-0.5 text-xs text-text-tertiary dark:text-text-dark-tertiary">
+            Upload your auth.json file from ~/.codex/ for OpenAI Codex CLI authentication.
+          </p>
+          <CodexAuthUpload value={settings.codex_auth_json} onChange={onCodexAuthChange} />
         </div>
       </div>
     </div>

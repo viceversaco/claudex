@@ -506,6 +506,11 @@ class SandboxService:
             sandbox_id, claude_config_path, json.dumps(config, indent=2)
         )
 
+    async def _setup_codex_auth(self, sandbox_id: str, codex_auth_json: str) -> None:
+        codex_dir = "/home/user/.codex"
+        await self.execute_command(sandbox_id, f"mkdir -p {codex_dir}")
+        await self.write_file(sandbox_id, f"{codex_dir}/auth.json", codex_auth_json)
+
     async def initialize_sandbox(
         self,
         sandbox_id: str,
@@ -517,6 +522,7 @@ class SandboxService:
         custom_agents: list[CustomAgentDict] | None = None,
         user_id: str | None = None,
         auto_compact_disabled: bool = False,
+        codex_auth_json: str | None = None,
     ) -> None:
         tasks: list[Coroutine[None, None, None]] = [
             self._start_openvscode_server(sandbox_id),
@@ -545,6 +551,9 @@ class SandboxService:
 
         if github_token:
             tasks.append(self._setup_github_token(sandbox_id, github_token))
+
+        if codex_auth_json:
+            tasks.append(self._setup_codex_auth(sandbox_id, codex_auth_json))
 
         await asyncio.gather(*tasks)
 
