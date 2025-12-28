@@ -39,24 +39,23 @@ export function useMessageCache({ chatId, queryClient }: UseMessageCacheParams) 
         (oldData: { pages: PaginatedMessages[]; pageParams: unknown[] } | undefined) => {
           if (!oldData?.pages || oldData.pages.length === 0) return oldData;
 
-          const lastPageIndex = oldData.pages.length - 1;
-          const newLastPageItems = [...oldData.pages[lastPageIndex].items];
+          const newFirstPageItems = [...oldData.pages[0].items];
 
-          if (userMessage && !newLastPageItems.some((msg) => msg.id === userMessage.id)) {
-            newLastPageItems.push(userMessage);
+          if (userMessage && !newFirstPageItems.some((msg) => msg.id === userMessage.id)) {
+            newFirstPageItems.unshift(userMessage);
           }
 
-          const lastMessage = newLastPageItems[newLastPageItems.length - 1];
-          if (lastMessage?.id === message.id) {
-            newLastPageItems[newLastPageItems.length - 1] = message;
+          const existingIndex = newFirstPageItems.findIndex((msg) => msg.id === message.id);
+          if (existingIndex >= 0) {
+            newFirstPageItems[existingIndex] = message;
           } else {
-            newLastPageItems.push(message);
+            newFirstPageItems.unshift(message);
           }
 
           return {
             ...oldData,
             pages: oldData.pages.map((page, idx) =>
-              idx === lastPageIndex ? { ...page, items: newLastPageItems } : page,
+              idx === 0 ? { ...page, items: newFirstPageItems } : page,
             ),
           };
         },

@@ -238,6 +238,7 @@ export function ChatPage() {
         </div>
         {currentView === 'agent' && (
           <ChatComponent
+            key={chatId}
             messages={messages}
             copiedMessageId={streamingState.copiedMessageId}
             isLoading={isLoading}

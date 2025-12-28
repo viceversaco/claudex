@@ -154,7 +154,7 @@ class MessageService(BaseDbService[Message]):
                 select(Message)
                 .options(selectinload(Message.attachments))
                 .filter(Message.chat_id == chat_id, Message.deleted_at.is_(None))
-                .order_by(Message.created_at)
+                .order_by(Message.created_at.desc())
                 .offset(offset)
                 .limit(pagination.per_page)
             )

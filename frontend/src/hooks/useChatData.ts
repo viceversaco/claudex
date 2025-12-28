@@ -23,10 +23,17 @@ export function useChatData(chatId: string | undefined): UseChatDataResult {
     () => chatsQuery.data?.pages?.flatMap((page) => page.items) ?? [],
     [chatsQuery.data?.pages],
   );
-  const fetchedMessages = useMemo(
-    () => messagesQuery.data?.pages?.flatMap((page) => page.items) ?? [],
-    [messagesQuery.data?.pages],
-  );
+  const fetchedMessages = useMemo(() => {
+    if (!messagesQuery.data?.pages) return [];
+    const reversedPages = [...messagesQuery.data.pages].reverse();
+    const allMessages = reversedPages.flatMap((page) => [...page.items].reverse());
+    const seen = new Set<string>();
+    return allMessages.filter((msg) => {
+      if (seen.has(msg.id)) return false;
+      seen.add(msg.id);
+      return true;
+    });
+  }, [messagesQuery.data?.pages]);
 
   const currentChatFromList = useMemo(
     () => chats.find((chat) => chat.id === chatId),

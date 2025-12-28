@@ -73,7 +73,10 @@ export function useStreamReconnect({
                 is_bot: true,
               };
               addMessageToCache(placeholderMessage);
-              setMessages((prev) => [...prev, placeholderMessage]);
+              setMessages((prev) => {
+                if (prev.some((m) => m.id === placeholderMessage.id)) return prev;
+                return [...prev, placeholderMessage];
+              });
             }
 
             try {

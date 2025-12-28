@@ -99,6 +99,7 @@ export function useMessageActions({
         };
 
         setMessages((prev) => {
+          if (prev.some((m) => m.id === initialMessage.id)) return prev;
           const lastMessage = prev[prev.length - 1];
           if (isEmptyBotPlaceholder(lastMessage)) {
             return [...prev.slice(0, -1), initialMessage];
@@ -172,7 +173,10 @@ export function useMessageActions({
         attachments: createAttachmentsFromFiles(inputFiles, storeBlobUrl),
       };
 
-      setMessages((prev) => [...prev, newMessage]);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === newMessage.id)) return prev;
+        return [...prev, newMessage];
+      });
       setPendingUserMessageId(newMessage.id);
 
       try {
