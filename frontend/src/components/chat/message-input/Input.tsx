@@ -239,7 +239,7 @@ export const Input = memo(function Input({
     <form ref={formRef} onSubmit={handleSubmit} className="relative px-4 sm:px-6">
       <div
         {...dragHandlers}
-        className={`relative rounded-2xl border bg-surface-secondary transition-all duration-300 dark:bg-surface-dark-secondary ${
+        className={`relative rounded-2xl border bg-surface shadow-sm transition-all duration-300 dark:bg-surface-dark-tertiary dark:shadow-black/20 ${
           isDragging
             ? 'scale-[1.01] border-brand-400 bg-brand-50/50 dark:border-brand-500 dark:bg-brand-950/20'
             : 'border-border dark:border-border-dark'

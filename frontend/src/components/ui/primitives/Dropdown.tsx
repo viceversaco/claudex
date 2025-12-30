@@ -133,7 +133,7 @@ function DropdownInner<T>({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         variant="unstyled"
-        className={`flex items-center gap-1 rounded-lg border border-border/70 bg-surface-secondary px-2 py-1 shadow-sm hover:border-border-secondary hover:shadow-md dark:border-white/5 dark:bg-surface-dark-secondary dark:hover:border-white/10 ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+        className={`flex items-center gap-1 rounded-lg border border-border/70 bg-surface px-2 py-1 shadow-sm hover:border-border-secondary hover:shadow-md dark:border-white/5 dark:bg-surface-dark-tertiary dark:hover:border-white/10 ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
       >
         <div className={`flex items-center ${LeftIcon ? 'gap-1.5' : 'gap-2'}`}>
           {LeftIcon && <LeftIcon className="h-3.5 w-3.5 text-text-quaternary" />}

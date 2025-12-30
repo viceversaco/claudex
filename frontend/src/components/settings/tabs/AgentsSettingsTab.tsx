@@ -51,7 +51,7 @@ export const AgentsSettingsTab: React.FC<AgentsSettingsTabProps> = ({
           <p className="mb-2 line-clamp-2 text-xs text-text-tertiary dark:text-text-dark-tertiary">
             {agent.description}
           </p>
-          <div className="mt-2 rounded bg-surface-secondary p-2 dark:bg-surface-dark-secondary">
+          <div className="mt-2 rounded border border-border p-2 dark:border-border-dark">
             <p className="line-clamp-2 font-mono text-xs text-text-secondary dark:text-text-dark-secondary">
               {agent.content}
             </p>

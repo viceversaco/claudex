@@ -453,7 +453,7 @@ const SettingsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-viewport flex items-center justify-center bg-surface dark:bg-surface-dark">
+      <div className="flex min-h-full items-center justify-center bg-surface dark:bg-surface-dark-secondary">
         <Spinner size="lg" className="text-brand-600" />
       </div>
     );
@@ -461,14 +461,14 @@ const SettingsPage: React.FC = () => {
 
   if (fetchError && !settings) {
     return (
-      <div className="min-h-viewport flex items-center justify-center bg-surface dark:bg-surface-dark">
+      <div className="flex min-h-full items-center justify-center bg-surface dark:bg-surface-dark-secondary">
         <div className="text-text-primary dark:text-text-dark-primary">Failed to load settings</div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-full overflow-x-hidden bg-surface dark:bg-surface-dark">
+    <div className="flex min-h-full overflow-x-hidden bg-surface dark:bg-surface-dark-secondary">
       <div className="flex min-w-0 flex-1 justify-center px-4 py-6">
         <div className="w-full min-w-0 max-w-3xl">
           <div className="mb-6">

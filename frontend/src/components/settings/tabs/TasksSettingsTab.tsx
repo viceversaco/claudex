@@ -226,7 +226,7 @@ export const TasksSettingsTab: React.FC<TasksSettingsTabProps> = ({ onAddTask, o
         </p>
 
         {tasksList.length === 0 ? (
-          <div className="rounded-lg border border-border p-8 text-center dark:border-border-dark">
+          <div className="rounded-lg border border-border bg-white p-8 text-center dark:border-border-dark dark:bg-surface-dark-tertiary">
             <CalendarClock className="mx-auto mb-3 h-8 w-8 text-text-quaternary dark:text-text-dark-quaternary" />
             <p className="mb-3 text-sm text-text-tertiary dark:text-text-dark-tertiary">
               No scheduled tasks configured yet
@@ -246,7 +246,7 @@ export const TasksSettingsTab: React.FC<TasksSettingsTabProps> = ({ onAddTask, o
               {tasksList.map((task) => (
                 <div
                   key={task.id}
-                  className="rounded-lg border border-border bg-surface p-4 transition-colors hover:border-border-hover dark:border-border-dark dark:bg-surface-dark dark:hover:border-border-dark-hover"
+                  className="rounded-lg border border-border bg-white p-4 transition-colors hover:border-border-hover dark:border-border-dark dark:bg-surface-dark-tertiary dark:hover:border-border-dark-hover"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">

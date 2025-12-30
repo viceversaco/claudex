@@ -41,7 +41,7 @@ export function ActivityBar() {
   return (
     <div
       className={cn(
-        'absolute left-0 top-0 z-50 flex h-full flex-col border-r border-border bg-surface-secondary dark:border-border-dark dark:bg-surface-dark-secondary',
+        'absolute left-0 top-0 z-50 flex h-full flex-col border-r border-border bg-surface-secondary dark:border-border-dark dark:bg-surface-dark',
         LAYOUT_CLASSES.ACTIVITY_BAR_WIDTH,
       )}
     >
@@ -52,7 +52,7 @@ export function ActivityBar() {
             className={cn(
               'flex h-12 w-full items-center justify-center border-l-2 transition-all duration-200',
               currentView === view
-                ? 'border-brand-600 bg-surface text-brand-600 dark:border-brand-400 dark:bg-surface-dark dark:text-brand-400'
+                ? 'border-brand-600 bg-surface text-brand-600 dark:border-brand-400 dark:bg-surface-dark-secondary dark:text-brand-400'
                 : 'border-transparent text-text-tertiary hover:bg-surface-hover hover:text-text-primary dark:text-text-dark-tertiary dark:hover:bg-surface-dark-hover dark:hover:text-text-dark-primary',
             )}
             aria-label={`Switch to ${label.toLowerCase()} view`}

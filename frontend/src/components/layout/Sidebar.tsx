@@ -266,8 +266,7 @@ export function Sidebar({
       <aside
         className={cn(
           'absolute top-0 h-full w-64',
-          'bg-surface dark:bg-surface-dark',
-          'border-r border-border dark:border-border-dark',
+          'bg-surface-secondary dark:bg-surface-dark',
           'z-40 flex flex-col transition-[left] duration-500 ease-in-out',
           sidebarOpen ? (hasActivityBar ? 'left-12' : 'left-0') : '-left-64',
         )}
@@ -278,8 +277,8 @@ export function Sidebar({
             variant="unstyled"
             className={cn(
               'w-full px-3 py-1.5',
-              'bg-surface-secondary dark:bg-surface-dark-secondary',
-              'hover:bg-surface-tertiary dark:hover:bg-surface-dark-tertiary',
+              'bg-white dark:bg-surface-dark-secondary',
+              'hover:bg-surface-secondary dark:hover:bg-surface-dark-tertiary',
               'text-text-primary dark:text-text-dark-primary',
               'rounded-lg transition-colors duration-200',
               'flex items-center justify-center gap-2 text-sm font-medium',
@@ -300,7 +299,7 @@ export function Sidebar({
               variant="unstyled"
               className={cn(
                 'w-full py-1.5 pl-8 pr-3',
-                'bg-surface-secondary dark:bg-surface-dark-secondary',
+                'bg-white dark:bg-surface-dark-secondary',
                 'rounded-lg text-text-primary dark:text-text-dark-primary',
                 'placeholder-text-tertiary dark:placeholder-text-dark-tertiary',
                 'focus:outline-none focus:ring-1 focus:ring-border-secondary dark:focus:ring-border-dark-secondary',

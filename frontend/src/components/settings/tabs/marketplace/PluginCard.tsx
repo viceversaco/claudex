@@ -25,7 +25,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({ plugin, isInstalled, onC
   return (
     <button
       onClick={onClick}
-      className="border-border-primary bg-surface-primary dark:border-border-dark-primary dark:bg-surface-dark-primary group flex w-full flex-col rounded-lg border p-4 text-left transition-all hover:border-brand-500 hover:shadow-md dark:hover:border-brand-400"
+      className="group flex w-full flex-col rounded-lg border border-border bg-white p-4 text-left transition-all hover:border-brand-500 hover:shadow-md dark:border-border-dark dark:bg-surface-dark-tertiary dark:hover:border-brand-400"
     >
       <div className="mb-2 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
@@ -33,11 +33,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({ plugin, isInstalled, onC
             <h3 className="truncate text-sm font-medium text-text-primary dark:text-text-dark-primary">
               {plugin.name}
             </h3>
-            {isInstalled && (
-              <Badge variant="success" size="sm">
-                Installed
-              </Badge>
-            )}
+            {isInstalled && <Badge variant="success">Installed</Badge>}
           </div>
           {plugin.author?.name && (
             <p className="mt-0.5 text-xs text-text-tertiary dark:text-text-dark-tertiary">

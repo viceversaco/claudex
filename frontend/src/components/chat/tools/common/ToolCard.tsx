@@ -97,7 +97,7 @@ const ToolCardInner: React.FC<ToolCardProps> = ({
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-lg border border-border bg-surface-secondary transition-all duration-200 dark:border-border-dark dark:bg-surface-dark-secondary ${className}`}
+      className={`group relative overflow-hidden rounded-lg border border-border bg-surface-secondary transition-all duration-200 dark:border-border-dark dark:bg-surface-dark-tertiary ${className}`}
     >
       {hasExpandableContent ? (
         <button

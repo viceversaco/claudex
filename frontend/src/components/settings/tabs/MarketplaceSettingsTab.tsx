@@ -13,6 +13,7 @@ import type { MarketplacePlugin } from '@/types/marketplace.types';
 
 const CATEGORIES = [
   'all',
+  'installed',
   'development',
   'productivity',
   'testing',
@@ -44,11 +45,14 @@ export const MarketplaceSettingsTab: React.FC = () => {
         plugin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         plugin.description.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesCategory = selectedCategory === 'all' || plugin.category === selectedCategory;
+      const matchesCategory =
+        selectedCategory === 'all' ||
+        (selectedCategory === 'installed' && installedNames.has(plugin.name)) ||
+        plugin.category === selectedCategory;
 
       return matchesSearch && matchesCategory;
     });
-  }, [plugins, searchQuery, selectedCategory]);
+  }, [plugins, searchQuery, selectedCategory, installedNames]);
 
   return (
     <div className="space-y-4">
@@ -87,13 +91,15 @@ export const MarketplaceSettingsTab: React.FC = () => {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="border-border-primary bg-surface-primary dark:border-border-dark-primary dark:bg-surface-dark-primary rounded-md border px-3 py-2 text-sm text-text-primary focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:text-text-dark-primary"
+            className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40 dark:border-border-dark dark:bg-surface-dark-secondary dark:text-text-dark-primary"
           >
             {CATEGORIES.map((category) => (
               <option key={category} value={category}>
                 {category === 'all'
                   ? 'All Categories'
-                  : category.charAt(0).toUpperCase() + category.slice(1)}
+                  : category === 'installed'
+                    ? 'Installed'
+                    : category.charAt(0).toUpperCase() + category.slice(1)}
               </option>
             ))}
           </select>
@@ -124,10 +130,14 @@ export const MarketplaceSettingsTab: React.FC = () => {
             </button>
           </div>
         ) : filteredPlugins.length === 0 ? (
-          <div className="border-border-primary dark:border-border-dark-primary rounded-lg border p-8 text-center">
+          <div className="rounded-lg border border-border bg-white p-8 text-center dark:border-border-dark dark:bg-surface-dark-tertiary">
             <Store className="mx-auto mb-3 h-8 w-8 text-text-quaternary dark:text-text-dark-quaternary" />
             <p className="text-sm text-text-tertiary dark:text-text-dark-tertiary">
-              {plugins.length === 0 ? 'No plugins available' : 'No plugins match your search'}
+              {plugins.length === 0
+                ? 'No plugins available'
+                : selectedCategory === 'installed'
+                  ? 'No plugins installed yet'
+                  : 'No plugins match your search'}
             </p>
           </div>
         ) : (

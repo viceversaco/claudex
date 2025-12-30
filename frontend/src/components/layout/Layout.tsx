@@ -73,7 +73,7 @@ export function Layout({
 
           <main
             className={cn(
-              'relative min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-surface-secondary dark:bg-surface-dark',
+              'relative min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-surface-secondary dark:bg-surface-dark-secondary',
               contentClassName,
             )}
           >

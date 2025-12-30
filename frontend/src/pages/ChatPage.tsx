@@ -232,7 +232,7 @@ export function ChatPage() {
   return (
     <div className="relative flex h-full">
       <ViewSwitcher />
-      <div className="ml-12 flex h-full flex-1 overflow-hidden bg-surface text-text-primary dark:bg-surface-dark dark:text-text-dark-primary">
+      <div className="ml-12 flex h-full flex-1 overflow-hidden bg-surface text-text-primary dark:bg-surface-dark-secondary dark:text-text-dark-primary">
         <div className={`${isTerminalView ? 'flex' : 'hidden'} h-full flex-1`}>
           <TerminalView currentChat={currentChat} isVisible={isTerminalView} />
         </div>

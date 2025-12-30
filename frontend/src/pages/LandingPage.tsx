@@ -139,7 +139,7 @@ export function LandingPage() {
   useLayoutSidebar(sidebarContent);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-surface dark:bg-surface-dark-secondary">
       <div className="relative flex flex-1">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-surface-secondary/50 via-transparent to-brand-50/30 dark:from-surface-dark/50 dark:via-transparent dark:to-brand-900/10" />
         <div className="flex flex-1 items-center justify-center px-4 pb-10">
@@ -177,7 +177,7 @@ export function LandingPage() {
                     key={prompt}
                     onClick={() => handleExampleClick(prompt)}
                     variant="unstyled"
-                    className="whitespace-nowrap rounded-full border border-border bg-surface-secondary px-4 py-2.5 text-xs text-text-secondary transition-all duration-200 hover:border-brand-500/30 hover:bg-surface-tertiary dark:border-border-dark dark:bg-surface-dark-secondary dark:text-text-dark-secondary dark:hover:border-brand-400/30 dark:hover:bg-surface-dark-tertiary"
+                    className="whitespace-nowrap rounded-full border border-border bg-surface px-4 py-2.5 text-xs text-text-secondary transition-all duration-200 hover:border-brand-500/30 hover:bg-surface-secondary dark:border-border-dark dark:bg-surface-dark-tertiary dark:text-text-dark-secondary dark:hover:border-brand-400/30 dark:hover:bg-surface-dark-hover"
                   >
                     {prompt}
                   </Button>

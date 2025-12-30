@@ -82,9 +82,9 @@ export default {
         // Surface colors
         surface: {
           DEFAULT: '#ffffff',
-          secondary: '#f9f9f9',
-          tertiary: '#f3f3f3',
-          hover: '#f5f5f5',
+          secondary: '#f5f5f5',
+          tertiary: '#f0f0f0',
+          hover: '#ebebeb',
           dark: {
             DEFAULT: '#0a0a0a',
             secondary: '#141414',

@@ -86,7 +86,7 @@ export const McpSettingsTab: React.FC<McpSettingsTabProps> = ({
           <p className="mb-2 text-xs text-text-tertiary dark:text-text-dark-tertiary">
             {mcp.description}
           </p>
-          <div className="mt-2 rounded bg-surface-secondary p-2 dark:bg-surface-dark-secondary">
+          <div className="mt-2 rounded border border-border p-2 dark:border-border-dark">
             <div className="space-y-1">
               {(mcp.command_type === 'npx' ||
                 mcp.command_type === 'bunx' ||

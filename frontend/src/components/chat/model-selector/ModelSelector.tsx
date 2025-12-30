@@ -90,7 +90,7 @@ export const ModelSelector = memo(function ModelSelector({
 
   if (isLoading || models.length === 0) {
     return (
-      <div className="flex items-center gap-1 rounded-lg border border-border/70 bg-surface-secondary px-2 py-1 shadow-sm dark:border-white/5 dark:bg-surface-dark-secondary">
+      <div className="flex items-center gap-1 rounded-lg border border-border/70 bg-surface px-2 py-1 shadow-sm dark:border-white/5 dark:bg-surface-dark-tertiary">
         <Bot className="h-3.5 w-3.5 text-text-quaternary" />
         <div className="hidden h-3.5 w-16 animate-pulse rounded bg-text-quaternary/20 sm:block" />
         <ChevronDown className="hidden h-3.5 w-3.5 text-text-quaternary sm:block" />

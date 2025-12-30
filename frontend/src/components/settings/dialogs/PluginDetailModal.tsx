@@ -179,7 +179,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} size="xl">
       <div className="flex max-h-[80vh] flex-col">
-        <div className="border-border-primary bg-surface-primary dark:border-border-dark-primary dark:bg-surface-dark-primary flex items-center justify-between border-b p-4">
+        <div className="flex items-center justify-between border-b border-border bg-white p-4 dark:border-border-dark dark:bg-surface-dark">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <h2 className="truncate text-lg font-semibold text-text-primary dark:text-text-dark-primary">
@@ -280,7 +280,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({
                             ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
                             : isSelected
                               ? 'border-brand-500 bg-brand-50 dark:border-brand-400 dark:bg-brand-900/20'
-                              : 'border-border-primary dark:border-border-dark-primary hover:border-brand-300 dark:hover:border-brand-600'
+                              : 'border-border bg-white hover:border-brand-300 dark:border-border-dark dark:bg-surface-dark-secondary dark:hover:border-brand-600'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -340,7 +340,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({
           )}
         </div>
 
-        <div className="border-border-primary bg-surface-primary dark:border-border-dark-primary dark:bg-surface-dark-primary flex justify-end gap-2 border-t p-4">
+        <div className="flex justify-end gap-2 border-t border-border bg-white p-4 dark:border-border-dark dark:bg-surface-dark">
           <Button variant="outline" size="sm" onClick={onClose}>
             Cancel
           </Button>

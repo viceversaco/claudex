@@ -95,7 +95,7 @@ export const ListManagementTab = <T,>({
         </p>
 
         {!items || items.length === 0 ? (
-          <div className="rounded-lg border border-border p-8 text-center dark:border-border-dark">
+          <div className="rounded-lg border border-border bg-white p-8 text-center dark:border-border-dark dark:bg-surface-dark-tertiary">
             <EmptyIcon className="mx-auto mb-3 h-8 w-8 text-text-quaternary dark:text-text-dark-quaternary" />
             <p className="mb-3 text-sm text-text-tertiary dark:text-text-dark-tertiary">
               {emptyText}
@@ -109,7 +109,7 @@ export const ListManagementTab = <T,>({
             {items.map((item, index) => (
               <div
                 key={getItemKey(item, index)}
-                className="rounded-lg border border-border p-4 transition-colors hover:border-border-hover dark:border-border-dark dark:hover:border-border-dark-hover"
+                className="rounded-lg border border-border bg-white p-4 transition-colors hover:border-border-hover dark:border-border-dark dark:bg-surface-dark-tertiary dark:hover:border-border-dark-hover"
               >
                 <div className="flex items-start justify-between">
                   <div className="min-w-0 flex-1">{renderItem(item, index)}</div>
