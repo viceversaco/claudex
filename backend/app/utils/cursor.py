@@ -8,9 +8,7 @@ class InvalidCursorError(ValueError):
 
 
 def encode_cursor(created_at: datetime, id: UUID) -> str:
-    return base64.urlsafe_b64encode(
-        f"{created_at.isoformat()}|{id}".encode()
-    ).decode()
+    return base64.urlsafe_b64encode(f"{created_at.isoformat()}|{id}".encode()).decode()
 
 
 def decode_cursor(cursor: str) -> tuple[datetime, UUID]:

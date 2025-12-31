@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import select, func, delete, update, or_, and_
+from sqlalchemy import select, delete, update, or_, and_
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
