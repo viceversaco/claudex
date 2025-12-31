@@ -107,6 +107,7 @@ class ClaudeAgentService:
         self._active_transport: E2BSandboxTransport | DockerSandboxTransport | None = (
             None
         )
+        self._deferred_token_params: dict[str, Any] | None = None
 
     async def __aenter__(self) -> Self:
         return self
@@ -263,17 +264,15 @@ class ClaudeAgentService:
         if self.current_session_id:
             options.resume = self.current_session_id
 
-        token_usage = await self._get_context_token_usage(
-            options,
-            sandbox_id=sandbox_id_str,
-            sandbox_provider=sandbox_provider,
-            e2b_api_key=e2b_api_key
+        self._deferred_token_params = {
+            "chat_id": chat_id,
+            "sandbox_id": sandbox_id_str,
+            "sandbox_provider": sandbox_provider,
+            "e2b_api_key": e2b_api_key
             if sandbox_provider != SandboxProviderType.DOCKER
             else None,
-        )
-
-        if token_usage is not None:
-            await self._update_chat_token_usage(chat_id, token_usage)
+            "options": options,
+        }
 
     def get_total_cost_usd(self) -> float:
         return self._total_cost_usd
@@ -616,6 +615,26 @@ class ClaudeAgentService:
                     await db.commit()
         except Exception as e:
             logger.error("Failed to update chat token usage: %s", e)
+
+    async def update_deferred_token_usage(self) -> None:
+        if not self._deferred_token_params:
+            return
+
+        params = self._deferred_token_params
+        self._deferred_token_params = None
+
+        try:
+            token_usage = await self._get_context_token_usage(
+                params["options"],
+                sandbox_id=params["sandbox_id"],
+                sandbox_provider=params["sandbox_provider"],
+                e2b_api_key=params["e2b_api_key"],
+            )
+
+            if token_usage is not None:
+                await self._update_chat_token_usage(params["chat_id"], token_usage)
+        except Exception as e:
+            logger.warning("Failed to update deferred token usage: %s", e)
 
     async def _get_context_token_usage(
         self,

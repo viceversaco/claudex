@@ -446,7 +446,11 @@ async def _drain_ai_stream(
         if not ctx.events:
             raise ClaudeAgentException("Stream completed without any events")
 
-        return await _finalize_stream(ctx, MessageStreamStatus.COMPLETED)
+        result = await _finalize_stream(ctx, MessageStreamStatus.COMPLETED)
+
+        await ai_service.update_deferred_token_usage()
+
+        return result
 
     except StreamCancelled:
         raise

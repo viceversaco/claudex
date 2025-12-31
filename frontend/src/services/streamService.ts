@@ -123,8 +123,10 @@ class StreamService {
     const currentStream = this.store.getStream(streamId);
     if (!currentStream) return;
 
-    this.store.removeStream(streamId);
+    currentStream.source.onerror = null;
     currentStream.callbacks?.onComplete?.(messageId);
+    this.store.removeStream(streamId);
+    currentStream.source.close();
   }
 
   private handleGenericError(event: Event | ErrorEvent, streamId: string, messageId: string): void {

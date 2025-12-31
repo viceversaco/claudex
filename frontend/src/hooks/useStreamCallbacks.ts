@@ -122,11 +122,41 @@ export function useStreamCallbacks({
     }, 2000);
 
     if (chatId) {
-      Promise.resolve(refetchContextUsage()).catch(() => {});
+      const initialTokens = currentChat?.context_token_usage ?? 0;
+      const startTime = Date.now();
+      let lastTokens: number | undefined;
+      let stableCount = 0;
+
+      const scheduleNext = (attempt: number) => {
+        const delay = Math.min(1000 * Math.pow(2, attempt), 4000);
+        if (Date.now() - startTime + delay < 15000) {
+          setTimeout(() => poll(attempt + 1), delay);
+        }
+      };
+
+      const poll = (attempt: number) => {
+        if (Date.now() - startTime > 15000) return;
+
+        Promise.resolve(refetchContextUsage())
+          .then((result) => {
+            const tokens = (result as { data?: { tokens_used?: number } })?.data?.tokens_used;
+
+            if (tokens !== undefined && tokens !== initialTokens) {
+              stableCount = tokens === lastTokens ? stableCount + 1 : 1;
+              if (stableCount >= 2) return;
+            }
+            lastTokens = tokens;
+            scheduleNext(attempt);
+          })
+          .catch(() => scheduleNext(attempt));
+      };
+
+      setTimeout(() => poll(0), 1000);
     }
   }, [
     chatId,
     currentChat?.sandbox_id,
+    currentChat?.context_token_usage,
     queryClient,
     refetchContextUsage,
     refetchFilesMetadata,
