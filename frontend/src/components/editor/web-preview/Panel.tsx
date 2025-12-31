@@ -20,7 +20,7 @@ const DeviceButton = ({ active, onClick, title, children }: DeviceButtonProps) =
     onClick={onClick}
     variant="unstyled"
     className={`rounded p-1 ${
-      active ? 'bg-surface-tertiary shadow-sm dark:bg-surface-dark-tertiary' : 'text-text-tertiary'
+      active ? 'bg-surface-active shadow-sm dark:bg-surface-dark-active' : 'text-text-tertiary'
     }`}
     title={title}
   >

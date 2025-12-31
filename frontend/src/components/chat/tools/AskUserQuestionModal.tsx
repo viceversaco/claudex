@@ -84,7 +84,7 @@ function QuestionCard({
                 className={`group w-full rounded-md border px-2.5 py-2 text-left transition-all ${
                   selected
                     ? 'border-brand-500 bg-brand-500/10 dark:border-brand-400 dark:bg-brand-400/10'
-                    : 'border-border bg-surface-tertiary/50 hover:border-brand-300 hover:bg-surface-tertiary dark:border-border-dark dark:bg-surface-dark-tertiary/50 dark:hover:border-brand-700'
+                    : 'border-border bg-surface-tertiary/50 hover:border-brand-300 hover:bg-surface-hover dark:border-border-dark dark:bg-surface-dark-tertiary/50 dark:hover:border-brand-700 dark:hover:bg-surface-dark-hover'
                 }`}
                 disabled={isLoading}
               >

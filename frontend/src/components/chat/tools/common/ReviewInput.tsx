@@ -67,7 +67,7 @@ export function ReviewInput({
         <button
           onClick={onCancel}
           className={cn(
-            'rounded p-1 hover:bg-surface-secondary dark:hover:bg-surface-dark-secondary',
+            'rounded p-1 hover:bg-surface-hover dark:hover:bg-surface-dark-hover',
             'text-text-tertiary dark:text-text-dark-tertiary',
             'hover:text-text-primary dark:hover:text-text-dark-primary',
             'transition-colors',

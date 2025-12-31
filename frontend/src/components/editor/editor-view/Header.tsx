@@ -41,7 +41,7 @@ export const Header = memo(function Header({
             className={cn(
               'shrink-0 rounded-md p-1',
               'bg-surface-secondary dark:bg-surface-dark-secondary',
-              'hover:bg-surface-tertiary dark:hover:bg-surface-dark-tertiary',
+              'hover:bg-surface-hover dark:hover:bg-surface-dark-hover',
               'text-text-secondary dark:text-text-dark-secondary',
               'transition-colors duration-150',
             )}
@@ -95,7 +95,7 @@ export const Header = memo(function Header({
             className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-all ${
               showPreview
                 ? 'bg-brand-500 text-white hover:bg-brand-600'
-                : 'bg-surface-secondary text-text-secondary hover:bg-surface-tertiary dark:bg-surface-dark-secondary dark:text-text-dark-secondary dark:hover:bg-surface-dark-tertiary'
+                : 'bg-surface-secondary text-text-secondary hover:bg-surface-hover dark:bg-surface-dark-secondary dark:text-text-dark-secondary dark:hover:bg-surface-dark-hover'
             }`}
           >
             {showPreview ? (

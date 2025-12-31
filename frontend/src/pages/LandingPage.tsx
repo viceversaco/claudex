@@ -177,7 +177,7 @@ export function LandingPage() {
                     key={prompt}
                     onClick={() => handleExampleClick(prompt)}
                     variant="unstyled"
-                    className="whitespace-nowrap rounded-full border border-border bg-surface-secondary px-4 py-2.5 text-xs text-text-secondary transition-all duration-200 hover:border-brand-500/30 hover:bg-surface-tertiary dark:border-border-dark dark:bg-surface-dark-secondary dark:text-text-dark-secondary dark:hover:border-brand-400/30 dark:hover:bg-surface-dark-tertiary"
+                    className="whitespace-nowrap rounded-full border border-border bg-surface-secondary px-4 py-2.5 text-xs text-text-secondary transition-all duration-200 hover:border-brand-500/30 hover:bg-surface-hover dark:border-border-dark dark:bg-surface-dark-secondary dark:text-text-dark-secondary dark:hover:border-brand-400/30 dark:hover:bg-surface-dark-hover"
                   >
                     {prompt}
                   </Button>

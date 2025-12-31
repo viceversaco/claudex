@@ -14,7 +14,7 @@ export const NoOpenPortsState = ({ onRefresh, loading = false }: NoOpenPortsStat
         onClick={onRefresh}
         disabled={loading}
         variant="unstyled"
-        className="flex items-center gap-1.5 rounded-md bg-surface-secondary px-2.5 py-1 text-xs transition-colors hover:bg-surface-tertiary dark:bg-surface-dark-secondary dark:hover:bg-surface-dark-tertiary"
+        className="flex items-center gap-1.5 rounded-md bg-surface-secondary px-2.5 py-1 text-xs transition-colors hover:bg-surface-hover dark:bg-surface-dark-secondary dark:hover:bg-surface-dark-hover"
       >
         <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
         <span>Refresh</span>

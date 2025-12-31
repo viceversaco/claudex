@@ -56,8 +56,8 @@ export const MentionSuggestionsPanel = memo(function MentionSuggestionsPanel({
                     variant="unstyled"
                     className={`flex w-full items-center gap-2 px-3 py-1.5 text-left ${
                       isActive
-                        ? 'bg-surface-tertiary dark:bg-surface-dark-tertiary'
-                        : 'hover:bg-surface-secondary dark:hover:bg-surface-dark-secondary'
+                        ? 'bg-surface-active dark:bg-surface-dark-active'
+                        : 'hover:bg-surface-hover dark:hover:bg-surface-dark-hover'
                     }`}
                     onMouseDown={(event) => {
                       event.preventDefault();
@@ -102,8 +102,8 @@ export const MentionSuggestionsPanel = memo(function MentionSuggestionsPanel({
                     variant="unstyled"
                     className={`flex w-full items-center gap-2 px-3 py-1.5 text-left ${
                       isActive
-                        ? 'bg-surface-tertiary dark:bg-surface-dark-tertiary'
-                        : 'hover:bg-surface-secondary dark:hover:bg-surface-dark-secondary'
+                        ? 'bg-surface-active dark:bg-surface-dark-active'
+                        : 'hover:bg-surface-hover dark:hover:bg-surface-dark-hover'
                     }`}
                     onMouseDown={(event) => {
                       event.preventDefault();
@@ -150,8 +150,8 @@ export const MentionSuggestionsPanel = memo(function MentionSuggestionsPanel({
                     variant="unstyled"
                     className={`flex w-full items-center gap-2 px-3 py-1.5 text-left ${
                       isActive
-                        ? 'bg-surface-tertiary dark:bg-surface-dark-tertiary'
-                        : 'hover:bg-surface-secondary dark:hover:bg-surface-dark-secondary'
+                        ? 'bg-surface-active dark:bg-surface-dark-active'
+                        : 'hover:bg-surface-hover dark:hover:bg-surface-dark-hover'
                     }`}
                     onMouseDown={(event) => {
                       event.preventDefault();

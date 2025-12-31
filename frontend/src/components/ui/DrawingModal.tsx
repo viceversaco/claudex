@@ -279,7 +279,7 @@ export const DrawingModal = memo(function DrawingModal({
           <Button
             onClick={handleReset}
             variant="unstyled"
-            className="rounded-lg p-2 text-text-secondary hover:bg-surface-secondary dark:text-text-dark-secondary dark:hover:bg-surface-dark-secondary"
+            className="rounded-lg p-2 text-text-secondary hover:bg-surface-hover dark:text-text-dark-secondary dark:hover:bg-surface-dark-hover"
             aria-label="Reset image to original"
           >
             <RotateCcw className="h-5 w-5" />

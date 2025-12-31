@@ -69,7 +69,7 @@ export const Container: FC<ContainerProps> = ({ sandboxId, isVisible }) => {
             className={`flex cursor-pointer items-center gap-2 border-r border-border px-3 py-2 text-xs dark:border-border-dark ${
               activeTerminalId === terminal.id
                 ? 'bg-surface-secondary text-text-primary dark:bg-surface-dark-secondary dark:text-text-dark-primary'
-                : 'text-text-secondary hover:bg-surface-secondary dark:text-text-dark-secondary dark:hover:bg-surface-dark-secondary'
+                : 'text-text-secondary hover:bg-surface-hover dark:text-text-dark-secondary dark:hover:bg-surface-dark-hover'
             }`}
             onClick={() => setActiveTerminalId(terminal.id)}
           >
@@ -89,7 +89,7 @@ export const Container: FC<ContainerProps> = ({ sandboxId, isVisible }) => {
           </div>
         ))}
         <button
-          className="flex items-center justify-center px-3 py-2 text-xs text-text-secondary hover:bg-surface-secondary hover:text-text-primary dark:text-text-dark-secondary dark:hover:bg-surface-dark-secondary dark:hover:text-text-dark-primary"
+          className="flex items-center justify-center px-3 py-2 text-xs text-text-secondary hover:bg-surface-hover hover:text-text-primary dark:text-text-dark-secondary dark:hover:bg-surface-dark-hover dark:hover:text-text-dark-primary"
           onClick={addTerminal}
           aria-label="Add new terminal"
         >

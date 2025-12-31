@@ -22,7 +22,7 @@ export const PreviewHeader = memo(function PreviewHeader({
         <Button
           onClick={onToggleFullscreen}
           variant="unstyled"
-          className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-surface-tertiary dark:text-text-dark-secondary dark:hover:bg-surface-dark-tertiary"
+          className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-surface-hover dark:text-text-dark-secondary dark:hover:bg-surface-dark-hover"
           title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
         >
           {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}

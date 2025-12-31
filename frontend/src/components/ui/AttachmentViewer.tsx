@@ -135,7 +135,7 @@ function IconThumbnail({ attachment }: { attachment: MessageAttachment }) {
   const filename = attachment.filename || getDefaultFilename(attachment.file_type, 0);
 
   return (
-    <div className="relative flex h-32 w-32 flex-col items-center justify-center rounded-md border border-border bg-surface-secondary transition-colors hover:bg-surface-tertiary dark:border-border-dark dark:bg-surface-dark-secondary dark:hover:bg-surface-dark-tertiary">
+    <div className="relative flex h-32 w-32 flex-col items-center justify-center rounded-md border border-border bg-surface-secondary transition-colors hover:bg-surface-hover dark:border-border-dark dark:bg-surface-dark-secondary dark:hover:bg-surface-dark-hover">
       <Icon className={`h-10 w-10 ${color} mb-2`} />
       <p className="max-w-full truncate px-2 text-center text-xs text-text-secondary dark:text-text-dark-secondary">
         {filename}

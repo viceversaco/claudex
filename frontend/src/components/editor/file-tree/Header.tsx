@@ -43,7 +43,7 @@ export function Header({
               onClick={onRefresh}
               disabled={isRefreshing}
               variant="unstyled"
-              className="rounded-md bg-transparent p-1 text-text-tertiary transition-all hover:bg-surface-secondary hover:text-text-primary disabled:cursor-wait disabled:opacity-50 dark:text-text-dark-tertiary dark:hover:bg-surface-dark-secondary dark:hover:text-text-dark-primary"
+              className="rounded-md bg-transparent p-1 text-text-tertiary transition-all hover:bg-surface-hover hover:text-text-primary disabled:cursor-wait disabled:opacity-50 dark:text-text-dark-tertiary dark:hover:bg-surface-dark-hover dark:hover:text-text-dark-primary"
               title="Refresh project files"
             >
               {isRefreshing ? (
@@ -59,7 +59,7 @@ export function Header({
               onClick={onDownload}
               disabled={isDownloading}
               variant="unstyled"
-              className="rounded-md bg-transparent p-1 text-text-tertiary transition-all hover:bg-surface-secondary hover:text-text-primary disabled:cursor-wait disabled:opacity-50 dark:text-text-dark-tertiary dark:hover:bg-surface-dark-secondary dark:hover:text-text-dark-primary"
+              className="rounded-md bg-transparent p-1 text-text-tertiary transition-all hover:bg-surface-hover hover:text-text-primary disabled:cursor-wait disabled:opacity-50 dark:text-text-dark-tertiary dark:hover:bg-surface-dark-hover dark:hover:text-text-dark-primary"
               title="Download project files"
             >
               {isDownloading ? (
@@ -74,7 +74,7 @@ export function Header({
             <Button
               onClick={onClose}
               variant="unstyled"
-              className="rounded-md bg-transparent p-1 text-text-tertiary transition-all hover:bg-surface-secondary hover:text-text-primary dark:text-text-dark-tertiary dark:hover:bg-surface-dark-secondary dark:hover:text-text-dark-primary"
+              className="rounded-md bg-transparent p-1 text-text-tertiary transition-all hover:bg-surface-hover hover:text-text-primary dark:text-text-dark-tertiary dark:hover:bg-surface-dark-hover dark:hover:text-text-dark-primary"
               title="Close file tree"
             >
               <X className="h-3.5 w-3.5" />

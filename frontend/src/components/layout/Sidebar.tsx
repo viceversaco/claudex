@@ -279,7 +279,8 @@ export function Sidebar({
             className={cn(
               'w-full px-3 py-1.5',
               'bg-surface-secondary dark:bg-surface-dark-secondary',
-              'hover:bg-surface-tertiary dark:hover:bg-surface-dark-tertiary',
+              'hover:bg-surface-hover dark:hover:bg-surface-dark-hover',
+              'border border-border dark:border-border-dark',
               'text-text-primary dark:text-text-dark-primary',
               'rounded-lg transition-colors duration-200',
               'flex items-center justify-center gap-2 text-sm font-medium',
@@ -301,6 +302,7 @@ export function Sidebar({
               className={cn(
                 'w-full py-1.5 pl-8 pr-3',
                 'bg-surface-secondary dark:bg-surface-dark-secondary',
+                'border border-border dark:border-border-dark',
                 'rounded-lg text-text-primary dark:text-text-dark-primary',
                 'placeholder-text-tertiary dark:placeholder-text-dark-tertiary',
                 'focus:outline-none focus:ring-1 focus:ring-border-secondary dark:focus:ring-border-dark-secondary',

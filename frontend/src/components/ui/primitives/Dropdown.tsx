@@ -167,7 +167,7 @@ function DropdownInner<T>({
                   <Button
                     onClick={() => setSearchQuery('')}
                     variant="unstyled"
-                    className="absolute right-1 rounded bg-transparent p-1 text-text-quaternary transition-colors hover:bg-surface hover:text-text-primary dark:hover:bg-surface-dark dark:hover:text-text-dark-primary"
+                    className="absolute right-1 rounded bg-transparent p-1 text-text-quaternary transition-colors hover:bg-surface-hover hover:text-text-primary dark:hover:bg-surface-dark-hover dark:hover:text-text-dark-primary"
                   >
                     <X className="h-3 w-3" />
                   </Button>

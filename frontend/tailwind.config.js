@@ -84,12 +84,14 @@ export default {
           DEFAULT: '#f5f5f5',
           secondary: '#f9f9f9',
           tertiary: '#f3f3f3',
-          hover: '#ebebeb',
+          hover: '#e0e0e0',
+          active: '#d8d8d8',
           dark: {
             DEFAULT: '#0a0a0a',
             secondary: '#141414',
             tertiary: '#1e1e1e',
             hover: '#282828',
+            active: '#323232',
           },
         },
 

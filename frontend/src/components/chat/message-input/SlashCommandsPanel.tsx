@@ -28,8 +28,8 @@ export const SlashCommandsPanel = memo(function SlashCommandsPanel({
                 variant="unstyled"
                 className={`flex w-full items-center gap-6 px-3 py-1 text-left ${
                   isActive
-                    ? 'bg-surface-tertiary dark:bg-surface-dark-tertiary'
-                    : 'hover:bg-surface-secondary dark:hover:bg-surface-dark-secondary'
+                    ? 'bg-surface-active dark:bg-surface-dark-active'
+                    : 'hover:bg-surface-hover dark:hover:bg-surface-dark-hover'
                 }`}
                 onMouseDown={(event) => {
                   event.preventDefault();

@@ -256,7 +256,7 @@ export function TimePicker({
                     className={cn(
                       'rounded px-3 py-1 text-xs font-medium transition-all',
                       selectedPeriod === period
-                        ? 'bg-surface-tertiary text-text-primary shadow-sm dark:bg-surface-dark-tertiary dark:text-text-dark-primary'
+                        ? 'bg-surface-active text-text-primary shadow-sm dark:bg-surface-dark-active dark:text-text-dark-primary'
                         : 'text-text-tertiary hover:text-text-primary dark:text-text-dark-tertiary dark:hover:text-text-dark-primary',
                     )}
                   >

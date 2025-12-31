@@ -137,7 +137,7 @@ export const WebSearch: React.FC<WebSearchProps> = ({ tool }) => {
                   href={source.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group/item relative block rounded-lg px-4 py-3 transition-all duration-200 hover:bg-surface-hover active:bg-surface-tertiary dark:hover:bg-surface-dark-hover dark:active:bg-surface-dark-tertiary"
+                  className="group/item relative block rounded-lg px-4 py-3 transition-all duration-200 hover:bg-surface-hover active:bg-surface-active dark:hover:bg-surface-dark-hover dark:active:bg-surface-dark-active"
                 >
                   <div className="flex items-start gap-2">
                     <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black/5 dark:bg-white/5">

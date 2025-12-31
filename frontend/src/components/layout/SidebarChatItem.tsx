@@ -43,8 +43,8 @@ export const SidebarChatItem = memo(function SidebarChatItem({
           'rounded-md transition-colors duration-200',
           'flex min-w-0 items-center gap-2',
           isSelected
-            ? 'bg-surface-tertiary text-text-primary dark:bg-surface-dark-tertiary dark:text-text-dark-primary'
-            : 'text-text-secondary hover:bg-surface-secondary dark:text-text-dark-secondary dark:hover:bg-surface-dark-secondary',
+            ? 'bg-surface-active text-text-primary dark:bg-surface-dark-active dark:text-text-dark-primary'
+            : 'text-text-secondary hover:bg-surface-hover dark:text-text-dark-secondary dark:hover:bg-surface-dark-hover',
         )}
       >
         {isChatStreaming ? (
@@ -87,7 +87,7 @@ export const SidebarChatItem = memo(function SidebarChatItem({
           'flex-shrink-0 rounded p-1 transition-all duration-200',
           'text-text-tertiary dark:text-text-dark-tertiary',
           'hover:text-text-primary dark:hover:text-text-dark-primary',
-          'hover:bg-surface-secondary dark:hover:bg-surface-dark-secondary',
+          'hover:bg-surface-hover dark:hover:bg-surface-dark-hover',
           isHovered || isSelected || isDropdownOpen
             ? 'opacity-100'
             : 'opacity-0 group-hover:opacity-100',

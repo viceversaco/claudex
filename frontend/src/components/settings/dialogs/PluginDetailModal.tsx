@@ -203,14 +203,14 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({
                 href={plugin.homepage}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded p-1.5 text-text-tertiary hover:bg-surface-secondary hover:text-text-primary dark:text-text-dark-tertiary dark:hover:bg-surface-dark-secondary dark:hover:text-text-dark-primary"
+                className="rounded p-1.5 text-text-tertiary hover:bg-surface-hover hover:text-text-primary dark:text-text-dark-tertiary dark:hover:bg-surface-dark-hover dark:hover:text-text-dark-primary"
               >
                 <ExternalLink className="h-4 w-4" />
               </a>
             )}
             <button
               onClick={onClose}
-              className="rounded p-1.5 text-text-tertiary hover:bg-surface-secondary hover:text-text-primary dark:text-text-dark-tertiary dark:hover:bg-surface-dark-secondary dark:hover:text-text-dark-primary"
+              className="rounded p-1.5 text-text-tertiary hover:bg-surface-hover hover:text-text-primary dark:text-text-dark-tertiary dark:hover:bg-surface-dark-hover dark:hover:text-text-dark-primary"
             >
               <X className="h-4 w-4" />
             </button>

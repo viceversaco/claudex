@@ -105,7 +105,7 @@ export const IDEView = memo(function IDEView({ sandboxId, isActive = false }: ID
           <Button
             onClick={handleReload}
             variant="unstyled"
-            className="rounded-md bg-transparent p-1 text-text-tertiary transition-all hover:bg-surface-secondary hover:text-text-primary dark:text-text-dark-tertiary dark:hover:bg-surface-dark-secondary dark:hover:text-text-dark-primary"
+            className="rounded-md bg-transparent p-1 text-text-tertiary transition-all hover:bg-surface-hover hover:text-text-primary dark:text-text-dark-tertiary dark:hover:bg-surface-dark-hover dark:hover:text-text-dark-primary"
             title="Reload IDE"
           >
             <RotateCcw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -120,7 +120,7 @@ export const IDEView = memo(function IDEView({ sandboxId, isActive = false }: ID
           <Button
             onClick={handleDownload}
             variant="unstyled"
-            className="rounded-md bg-transparent p-1 text-text-tertiary transition-all hover:bg-surface-secondary hover:text-text-primary disabled:cursor-wait disabled:opacity-50 dark:text-text-dark-tertiary dark:hover:bg-surface-dark-secondary dark:hover:text-text-dark-primary"
+            className="rounded-md bg-transparent p-1 text-text-tertiary transition-all hover:bg-surface-hover hover:text-text-primary disabled:cursor-wait disabled:opacity-50 dark:text-text-dark-tertiary dark:hover:bg-surface-dark-hover dark:hover:text-text-dark-primary"
             title="Download all files"
             disabled={isDownloading}
           >
@@ -130,7 +130,7 @@ export const IDEView = memo(function IDEView({ sandboxId, isActive = false }: ID
           <Button
             onClick={handleOpenInNewTab}
             variant="unstyled"
-            className="rounded-md bg-transparent p-1 text-text-tertiary transition-all hover:bg-surface-secondary hover:text-text-primary dark:text-text-dark-tertiary dark:hover:bg-surface-dark-secondary dark:hover:text-text-dark-primary"
+            className="rounded-md bg-transparent p-1 text-text-tertiary transition-all hover:bg-surface-hover hover:text-text-primary dark:text-text-dark-tertiary dark:hover:bg-surface-dark-hover dark:hover:text-text-dark-primary"
             title="Open in new tab"
           >
             <ExternalLink className="h-3.5 w-3.5" />
