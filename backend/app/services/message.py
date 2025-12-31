@@ -18,7 +18,7 @@ from app.models.schemas import CursorPaginatedMessages
 from app.models.types import MessageAttachmentDict
 from app.services.base import BaseDbService, SessionFactoryType
 from app.services.exceptions import MessageException, ErrorCode
-from app.utils.cursor import encode_cursor, decode_cursor
+from app.utils.cursor import encode_cursor, decode_cursor, InvalidCursorError
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -148,7 +148,14 @@ class MessageService(BaseDbService[Message]):
             )
 
             if cursor:
-                ts, mid = decode_cursor(cursor)
+                try:
+                    ts, mid = decode_cursor(cursor)
+                except InvalidCursorError:
+                    raise MessageException(
+                        "Invalid pagination cursor",
+                        error_code=ErrorCode.VALIDATION_ERROR,
+                        status_code=400,
+                    )
                 query = query.filter(
                     or_(
                         Message.created_at < ts,
