@@ -85,7 +85,9 @@ class StreamPublisher:
 
         try:
             await self._redis.delete(REDIS_KEY_CHAT_TASK.format(chat_id=self.chat_id))
-            await self._redis.delete(REDIS_KEY_CHAT_REVOKED.format(chat_id=self.chat_id))
+            await self._redis.delete(
+                REDIS_KEY_CHAT_REVOKED.format(chat_id=self.chat_id)
+            )
         except Exception as exc:
             logger.error("Failed to cleanup Redis keys: %s", exc)
 

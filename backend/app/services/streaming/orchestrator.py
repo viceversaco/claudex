@@ -25,7 +25,6 @@ from app.services.user import UserService
 
 if TYPE_CHECKING:
     from celery import Task
-    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
     from app.services.claude_agent import ClaudeAgentService
 
@@ -297,11 +296,11 @@ async def run_chat_stream(
             cancellation = CancellationHandler(chat_id, publisher.redis)
             orchestrator = StreamOrchestrator(publisher, cancellation)
 
-            task.update_state(state="PROGRESS", meta={"status": "Starting AI processing"})
+            task.update_state(
+                state="PROGRESS", meta={"status": "Starting AI processing"}
+            )
 
-            async with ClaudeAgentService(
-                session_factory=session_local
-            ) as ai_service:
+            async with ClaudeAgentService(session_factory=session_local) as ai_service:
                 session_callback = SessionUpdateCallback(
                     chat_id=chat_id,
                     assistant_message_id=assistant_message_id,

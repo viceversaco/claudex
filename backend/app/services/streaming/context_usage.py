@@ -168,10 +168,14 @@ class ContextUsageTracker:
                         if not await self._is_stream_active(redis_client):
                             break
 
-                        await asyncio.sleep(settings.CONTEXT_USAGE_POLL_INTERVAL_SECONDS)
+                        await asyncio.sleep(
+                            settings.CONTEXT_USAGE_POLL_INTERVAL_SECONDS
+                        )
 
         except Exception as e:
-            logger.error("Context usage polling failed for chat %s: %s", self.chat_id, e)
+            logger.error(
+                "Context usage polling failed for chat %s: %s", self.chat_id, e
+            )
         finally:
             if redis_client:
                 await redis_client.close()

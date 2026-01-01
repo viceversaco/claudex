@@ -66,9 +66,7 @@ class CancellationHandler:
         if not self._redis:
             return None
 
-        return asyncio.create_task(
-            self._monitor_revocation(main_task, ai_service)
-        )
+        return asyncio.create_task(self._monitor_revocation(main_task, ai_service))
 
     async def _monitor_revocation(
         self,
