@@ -58,8 +58,9 @@ from app.services.sandbox import SandboxService
 from app.services.sandbox_providers import SandboxProviderType, create_sandbox_provider
 from app.services.sandbox_providers.types import DockerConfig
 from app.services.storage import StorageService
+from app.services.streaming.context_usage import ContextUsageTracker
+from app.services.streaming.orchestrator import run_chat_stream
 from app.services.user import UserService
-import app.tasks.chat_processor as chat_processor_module
 
 settings = get_settings()
 
@@ -311,54 +312,49 @@ class TestChatService(ChatService):
             "sandbox_provider": chat.sandbox_provider,
         }
 
-        @asynccontextmanager
-        async def mock_celery_session():
-            async with self._test_session_factory() as session:
-                yield self._test_session_factory, session.get_bind()
-
-        original_get_celery_session = chat_processor_module.get_celery_session
-
-        try:
-            chat_processor_module.get_celery_session = mock_celery_session
-            await chat_processor_module.process_chat_stream(
-                task=mock_task,
-                prompt=prompt,
-                system_prompt=system_prompt,
-                custom_instructions=custom_instructions,
-                user_data=user_data,
-                chat_data=chat_data,
-                model_id=model_id,
-                permission_mode=permission_mode,
-                session_id=session_id,
-                assistant_message_id=assistant_message_id,
-                thinking_mode=thinking_mode,
-                attachments=attachments,
-                sandbox_service=self._test_sandbox_service,
-            )
-        finally:
-            chat_processor_module.get_celery_session = original_get_celery_session
+        await run_chat_stream(
+            task=mock_task,
+            prompt=prompt,
+            system_prompt=system_prompt,
+            custom_instructions=custom_instructions,
+            user_data=user_data,
+            chat_data=chat_data,
+            model_id=model_id,
+            sandbox_service=self._test_sandbox_service,
+            permission_mode=permission_mode,
+            session_id=session_id,
+            assistant_message_id=assistant_message_id,
+            thinking_mode=thinking_mode,
+            attachments=attachments,
+            session_factory=self._test_session_factory,
+        )
 
         async with self._test_session_factory() as session:
             result = await session.execute(select(Chat).filter(Chat.id == chat.id))
             refreshed_chat = result.scalar_one_or_none()
 
         if refreshed_chat and refreshed_chat.session_id and refreshed_chat.sandbox_id:
-            usage_redis_client = Redis.from_url(
+            tracker = ContextUsageTracker(
+                chat_id=str(refreshed_chat.id),
+                session_id=refreshed_chat.session_id,
+                sandbox_id=refreshed_chat.sandbox_id,
+                sandbox_provider=refreshed_chat.sandbox_provider or "docker",
+                user_id=str(user.id),
+                model_id=model_id,
+            )
+
+            redis_client: Redis[str] = Redis.from_url(
                 settings.REDIS_URL, decode_responses=True
             )
             try:
-                await chat_processor_module.fetch_and_broadcast_context_usage(
-                    chat_id=str(refreshed_chat.id),
-                    session_id=refreshed_chat.session_id,
-                    sandbox_id=refreshed_chat.sandbox_id,
-                    sandbox_provider=refreshed_chat.sandbox_provider or "docker",
-                    user_id=str(user.id),
-                    model_id=model_id,
-                    redis_client=usage_redis_client,
-                    session_factory=self._test_session_factory,
-                )
+                async with ClaudeAgentService(
+                    session_factory=self._test_session_factory
+                ) as ai_service:
+                    await tracker.fetch_and_broadcast(
+                        ai_service, redis_client, self._test_session_factory
+                    )
             finally:
-                await usage_redis_client.close()
+                await redis_client.close()
 
         mock_result = MagicMock()
         mock_result.id = task_id
