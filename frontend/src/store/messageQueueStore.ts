@@ -2,10 +2,6 @@ import { create } from 'zustand';
 import type { LocalQueuedMessage } from '@/types';
 import { queueService } from '@/services/queueService';
 
-// Maximum number of messages that can be queued per chat.
-// Must match backend MAX_QUEUE_SIZE in app/constants.py
-const MAX_QUEUE_SIZE = 10;
-
 export const EMPTY_QUEUE: LocalQueuedMessage[] = [];
 
 interface MessageQueueState {
@@ -41,6 +37,53 @@ export const useMessageQueueStore = create<MessageQueueState>((set, get) => ({
     thinkingMode: string | null = null,
     files?: File[],
   ): Promise<string> => {
+    const currentQueue = get().queues.get(chatId) || [];
+    const existingMessage = currentQueue[0];
+
+    if (existingMessage) {
+      const appendedContent = existingMessage.content + '\n' + content;
+      const mergedFiles = [...(existingMessage.files || []), ...(files || [])];
+
+      set((state) => {
+        const nextQueues = new Map(state.queues);
+        nextQueues.set(chatId, [
+          {
+            ...existingMessage,
+            content: appendedContent,
+            files: mergedFiles.length > 0 ? mergedFiles : undefined,
+          },
+        ]);
+        return { queues: nextQueues };
+      });
+
+      if (existingMessage.synced) {
+        try {
+          const result = await queueService.appendToQueuedMessage(
+            chatId,
+            existingMessage.id,
+            content,
+            files,
+          );
+
+          set((state) => {
+            const nextQueues = new Map(state.queues);
+            const queue = nextQueues.get(chatId) || [];
+            const updatedQueue = queue.map((msg) =>
+              msg.id === existingMessage.id
+                ? { ...msg, content: result.content, attachments: result.attachments }
+                : msg,
+            );
+            nextQueues.set(chatId, updatedQueue);
+            return { queues: nextQueues };
+          });
+        } catch (error) {
+          console.error('Failed to append to queued message:', error);
+        }
+      }
+
+      return existingMessage.id;
+    }
+
     const tempId = crypto.randomUUID();
     const tempMessage: LocalQueuedMessage = {
       id: tempId,
@@ -53,13 +96,7 @@ export const useMessageQueueStore = create<MessageQueueState>((set, get) => ({
 
     set((state) => {
       const nextQueues = new Map(state.queues);
-      const currentQueue = nextQueues.get(chatId) || [];
-
-      if (currentQueue.length >= MAX_QUEUE_SIZE) {
-        return state;
-      }
-
-      nextQueues.set(chatId, [...currentQueue, tempMessage]);
+      nextQueues.set(chatId, [tempMessage]);
       return { queues: nextQueues };
     });
 
@@ -75,8 +112,8 @@ export const useMessageQueueStore = create<MessageQueueState>((set, get) => ({
 
       set((state) => {
         const nextQueues = new Map(state.queues);
-        const currentQueue = nextQueues.get(chatId) || [];
-        const updatedQueue = currentQueue.map((msg) =>
+        const queue = nextQueues.get(chatId) || [];
+        const updatedQueue = queue.map((msg) =>
           msg.id === tempId
             ? { ...msg, id: result.id, synced: true, attachments: result.attachments }
             : msg,

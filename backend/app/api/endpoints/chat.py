@@ -874,6 +874,60 @@ async def update_queued_message(
         )
 
 
+@router.post(
+    "/chats/{chat_id}/queue/{message_id}/append",
+    response_model=QueuedMessage,
+    responses={
+        401: {"model": HTTPErrorResponse, "description": "Unauthorized"},
+        404: {"model": HTTPErrorResponse, "description": "Message not found"},
+        500: {"model": HTTPErrorResponse, "description": "Internal server error"},
+    },
+)
+async def append_to_queued_message(
+    chat_id: UUID,
+    message_id: UUID,
+    content: str = Form(...),
+    attached_files: list[UploadFile] = [],
+    current_user: User = Depends(get_current_user),
+    chat_service: ChatService = Depends(get_chat_service),
+) -> QueuedMessage:
+    chat = await chat_service.get_chat(chat_id, current_user)
+
+    attachments: list[dict[str, Any]] | None = None
+    if attached_files:
+        attachments = list(
+            await asyncio.gather(
+                *[
+                    chat_service.storage_service.save_file(
+                        file, sandbox_id=chat.sandbox_id
+                    )
+                    for file in attached_files
+                ]
+            )
+        )
+
+    try:
+        async with redis_connection() as redis:
+            queue_service = QueueService(redis)
+            result = await queue_service.append_to_message(
+                str(chat_id), message_id, content, attachments
+            )
+            if result is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Queued message not found",
+                )
+            return result
+    except HTTPException:
+        raise
+    except RedisError as e:
+        logger.error("Redis error appending to queued message: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service temporarily unavailable",
+        )
+
+
 @router.delete(
     "/chats/{chat_id}/queue/{message_id}",
     status_code=status.HTTP_204_NO_CONTENT,

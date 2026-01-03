@@ -23,6 +23,7 @@ from app.services.sandbox_providers import create_sandbox_provider
 from app.services.streaming.cancellation import CancellationHandler, StreamCancelled
 from app.services.streaming.events import StreamEvent
 from app.services.streaming.publisher import StreamPublisher
+from app.services.streaming.queue_injector import QueueInjector
 from app.services.streaming.session import SessionUpdateCallback, hydrate_user_and_chat
 from app.services.user import UserService
 from app.utils.redis import redis_connection
@@ -118,6 +119,8 @@ class StreamOrchestrator:
             current_task, ctx.ai_service
         )
 
+        queue_injector: QueueInjector | None = None
+
         try:
             while True:
                 try:
@@ -133,6 +136,16 @@ class StreamOrchestrator:
                 ctx.events.append(deepcopy(event))
                 await self.publisher.publish_event(event)
 
+                if QueueInjector.should_try_injection(event):
+                    if queue_injector is None:
+                        queue_injector = self._create_queue_injector(ctx)
+
+                    if queue_injector:
+                        try:
+                            await queue_injector.check_and_inject()
+                        except Exception as e:
+                            logger.warning("Queue injection failed: %s", e)
+
                 ctx.task.update_state(
                     state="PROGRESS",
                     meta={"status": "Processing", "events_emitted": len(ctx.events)},
@@ -142,6 +155,18 @@ class StreamOrchestrator:
                 revocation_task.cancel()
                 with suppress(asyncio.CancelledError):
                     await revocation_task
+
+    def _create_queue_injector(self, ctx: StreamContext) -> QueueInjector | None:
+        transport = ctx.ai_service.get_active_transport()
+        if not transport:
+            return None
+
+        return QueueInjector(
+            chat_id=ctx.chat_id,
+            transport=transport,
+            publisher=self.publisher,
+            session_factory=ctx.session_factory,
+        )
 
     async def _finalize_stream(
         self, ctx: StreamContext, status: MessageStreamStatus

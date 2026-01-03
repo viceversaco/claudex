@@ -257,6 +257,9 @@ class ClaudeAgentService:
             finally:
                 self._active_transport = None
 
+    def get_active_transport(self) -> E2BSandboxTransport | DockerSandboxTransport | None:
+        return self._active_transport
+
     async def _build_auth_env(
         self, model_id: str, user_settings: UserSettings
     ) -> tuple[dict[str, str], ModelProvider | None]:

@@ -218,6 +218,10 @@ class StreamService {
       this.handleQueueProcessingEvent(event as MessageEvent, chatId),
     );
 
+    register('queue_injected', (event: Event) =>
+      this.handleQueueProcessingEvent(event as MessageEvent, chatId),
+    );
+
     source.onerror = (event) => {
       this.handleGenericError(event, streamId, messageId);
     };

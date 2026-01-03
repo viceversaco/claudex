@@ -101,6 +101,39 @@ class QueueService:
 
         return None
 
+    async def append_to_message(
+        self,
+        chat_id: str,
+        message_id: UUID,
+        content: str,
+        attachments: list[dict[str, Any]] | None = None,
+    ) -> QueuedMessage | None:
+        key = self._queue_key(chat_id)
+        raw_items = await self.redis.lrange(key, 0, -1)
+
+        for idx, raw in enumerate(raw_items):
+            data = json.loads(raw)
+            if data["id"] == str(message_id):
+                data["content"] = data["content"] + "\n" + content
+
+                if attachments:
+                    existing_attachments = data.get("attachments") or []
+                    data["attachments"] = existing_attachments + attachments
+
+                await self.redis.lset(key, idx, json.dumps(data))
+                return QueuedMessage(
+                    id=UUID(data["id"]),
+                    content=data["content"],
+                    model_id=data["model_id"],
+                    permission_mode=data.get("permission_mode", "auto"),
+                    thinking_mode=data.get("thinking_mode"),
+                    position=idx,
+                    queued_at=datetime.fromisoformat(data["queued_at"]),
+                    attachments=data.get("attachments"),
+                )
+
+        return None
+
     async def remove_message(self, chat_id: str, message_id: UUID) -> bool:
         key = self._queue_key(chat_id)
         raw_items = await self.redis.lrange(key, 0, -1)

@@ -74,9 +74,38 @@ async function removeQueuedMessage(chatId: string, messageId: string): Promise<v
   });
 }
 
+async function appendToQueuedMessage(
+  chatId: string,
+  messageId: string,
+  content: string,
+  files?: File[],
+): Promise<QueuedMessage> {
+  validateId(chatId, 'Chat ID');
+  validateId(messageId, 'Message ID');
+  validateRequired(content, 'Content');
+
+  return serviceCall(async () => {
+    const formData = new FormData();
+    formData.append('content', content);
+
+    if (files) {
+      files.forEach((file) => {
+        formData.append('attached_files', file);
+      });
+    }
+
+    const response = await apiClient.postForm<QueuedMessage>(
+      `/chat/chats/${chatId}/queue/${messageId}/append`,
+      formData,
+    );
+    return ensureResponse(response, 'Failed to append to queued message');
+  });
+}
+
 export const queueService = {
   queueMessage,
   getQueue,
   updateQueuedMessage,
   removeQueuedMessage,
+  appendToQueuedMessage,
 };

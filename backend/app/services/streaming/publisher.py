@@ -105,6 +105,28 @@ class StreamPublisher:
             },
         )
 
+    async def publish_queue_injected(
+        self,
+        queued_message_id: str,
+        user_message_id: str,
+        assistant_message_id: str,
+        content: str,
+        model_id: str,
+        attachments: list[dict[str, Any]] | None = None,
+    ) -> None:
+        await self.publish(
+            "queue_injected",
+            {
+                "queued_message_id": queued_message_id,
+                "user_message_id": user_message_id,
+                "assistant_message_id": assistant_message_id,
+                "content": content,
+                "model_id": model_id,
+                "attachments": attachments,
+                "injected_inline": True,
+            },
+        )
+
     async def cleanup(self) -> None:
         if not self._redis:
             return
