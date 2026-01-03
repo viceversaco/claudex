@@ -675,8 +675,6 @@ class LocalDockerProvider(SandboxProvider):
             if checkpoint_id:
                 await self.restore_checkpoint(new_sandbox_id, checkpoint_id)
 
-            await self._start_ide_server(new_sandbox_id)
-
             return new_sandbox_id
         except Exception:
             if new_sandbox_id in self._containers:

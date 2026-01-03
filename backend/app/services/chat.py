@@ -558,15 +558,8 @@ class ChatService(BaseDbService[Chat]):
             try:
                 await fork_sandbox_service.initialize_sandbox(
                     sandbox_id=new_sandbox_id,
-                    github_token=user_settings.github_personal_access_token,
                     openrouter_api_key=user_settings.openrouter_api_key,
-                    custom_env_vars=user_settings.custom_env_vars,
-                    custom_skills=user_settings.custom_skills,
-                    custom_slash_commands=user_settings.custom_slash_commands,
-                    custom_agents=user_settings.custom_agents,
-                    user_id=str(user.id),
-                    auto_compact_disabled=user_settings.auto_compact_disabled,
-                    codex_auth_json=user_settings.codex_auth_json,
+                    is_fork=True,
                 )
 
                 async with self.session_factory() as db:
@@ -580,6 +573,8 @@ class ChatService(BaseDbService[Chat]):
                     db.add(new_chat)
                     await db.flush()
 
+                    new_messages: list[Message] = []
+                    msg_to_attachments: list[tuple[Message, list[MessageAttachment]]] = []
                     for msg in messages:
                         new_message = Message(
                             chat_id=new_chat.id,
@@ -591,10 +586,15 @@ class ChatService(BaseDbService[Chat]):
                             stream_status=msg.stream_status,
                             total_cost_usd=msg.total_cost_usd,
                         )
-                        db.add(new_message)
-                        await db.flush()
+                        new_messages.append(new_message)
+                        msg_to_attachments.append((new_message, list(msg.attachments)))
 
-                        for att in msg.attachments:
+                    db.add_all(new_messages)
+                    await db.flush()
+
+                    all_attachments: list[MessageAttachment] = []
+                    for new_message, orig_attachments in msg_to_attachments:
+                        for att in orig_attachments:
                             new_attachment = MessageAttachment(
                                 message_id=new_message.id,
                                 file_url="",
@@ -602,10 +602,14 @@ class ChatService(BaseDbService[Chat]):
                                 file_type=att.file_type,
                                 filename=att.filename,
                             )
-                            db.add(new_attachment)
-                            await db.flush()
-                            settings = get_settings()
-                            new_attachment.file_url = f"{settings.BASE_URL}/api/v1/attachments/{new_attachment.id}/preview"
+                            all_attachments.append(new_attachment)
+
+                    if all_attachments:
+                        db.add_all(all_attachments)
+                        await db.flush()
+                        settings = get_settings()
+                        for att in all_attachments:
+                            att.file_url = f"{settings.BASE_URL}/api/v1/attachments/{att.id}/preview"
 
                     await db.commit()
                     await db.refresh(new_chat)

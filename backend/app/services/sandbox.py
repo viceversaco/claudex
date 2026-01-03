@@ -428,14 +428,18 @@ class SandboxService:
     ) -> None:
         if not custom_env_vars:
             return
-        for env_var in custom_env_vars:
-            await self.provider.add_secret(sandbox_id, env_var["key"], env_var["value"])
+        await asyncio.gather(*[
+            self.provider.add_secret(sandbox_id, env_var["key"], env_var["value"])
+            for env_var in custom_env_vars
+        ])
 
     async def _setup_github_token(self, sandbox_id: str, github_token: str) -> None:
         script_content = '#!/bin/sh\\necho "$GITHUB_TOKEN"'
-        await self.provider.add_secret(sandbox_id, "GITHUB_TOKEN", github_token)
-        await self.provider.add_secret(
-            sandbox_id, "GIT_ASKPASS", "/home/user/.git-askpass.sh"
+        await asyncio.gather(
+            self.provider.add_secret(sandbox_id, "GITHUB_TOKEN", github_token),
+            self.provider.add_secret(
+                sandbox_id, "GIT_ASKPASS", "/home/user/.git-askpass.sh"
+            ),
         )
 
         setup_cmd = (
@@ -445,11 +449,12 @@ class SandboxService:
         await self.execute_command(sandbox_id, setup_cmd)
 
     async def _setup_anthropic_bridge(
-        self, sandbox_id: str, openrouter_api_key: str
+        self, sandbox_id: str, openrouter_api_key: str, skip_secret: bool = False
     ) -> None:
-        await self.provider.add_secret(
-            sandbox_id, "OPENROUTER_API_KEY", openrouter_api_key
-        )
+        if not skip_secret:
+            await self.provider.add_secret(
+                sandbox_id, "OPENROUTER_API_KEY", openrouter_api_key
+            )
 
         start_cmd = f"OPENROUTER_API_KEY={shlex.quote(openrouter_api_key)} anthropic-bridge --port 3456 --host 0.0.0.0"
         start_result = await self.execute_command(
@@ -523,37 +528,42 @@ class SandboxService:
         user_id: str | None = None,
         auto_compact_disabled: bool = False,
         codex_auth_json: str | None = None,
+        is_fork: bool = False,
     ) -> None:
         tasks: list[Coroutine[None, None, None]] = [
             self._start_openvscode_server(sandbox_id),
-            self._setup_claude_config(sandbox_id, auto_compact_disabled),
         ]
 
-        if custom_env_vars:
-            tasks.append(self._add_env_vars_parallel(sandbox_id, custom_env_vars))
+        # Forks skip filesystem-based setup (env vars in .bashrc, config files, skills/commands/agents)
+        # since these are preserved when cloning the container. Only processes need restarting.
+        if not is_fork:
+            tasks.append(self._setup_claude_config(sandbox_id, auto_compact_disabled))
+
+            if custom_env_vars:
+                tasks.append(self._add_env_vars_parallel(sandbox_id, custom_env_vars))
+
+            has_resources = (
+                custom_skills or custom_slash_commands or custom_agents
+            ) and user_id
+            if has_resources:
+                tasks.append(
+                    self._copy_all_resources_to_sandbox(
+                        sandbox_id,
+                        user_id,  # type: ignore[arg-type]
+                        custom_skills,
+                        custom_slash_commands,
+                        custom_agents,
+                    )
+                )
+
+            if github_token:
+                tasks.append(self._setup_github_token(sandbox_id, github_token))
+
+            if codex_auth_json:
+                tasks.append(self._setup_codex_auth(sandbox_id, codex_auth_json))
 
         if openrouter_api_key:
-            tasks.append(self._setup_anthropic_bridge(sandbox_id, openrouter_api_key))
-
-        has_resources = (
-            custom_skills or custom_slash_commands or custom_agents
-        ) and user_id
-        if has_resources:
-            tasks.append(
-                self._copy_all_resources_to_sandbox(
-                    sandbox_id,
-                    user_id,  # type: ignore[arg-type]
-                    custom_skills,
-                    custom_slash_commands,
-                    custom_agents,
-                )
-            )
-
-        if github_token:
-            tasks.append(self._setup_github_token(sandbox_id, github_token))
-
-        if codex_auth_json:
-            tasks.append(self._setup_codex_auth(sandbox_id, codex_auth_json))
+            tasks.append(self._setup_anthropic_bridge(sandbox_id, openrouter_api_key, skip_secret=is_fork))
 
         await asyncio.gather(*tasks)
 
