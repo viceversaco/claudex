@@ -574,7 +574,9 @@ class ChatService(BaseDbService[Chat]):
                     await db.flush()
 
                     new_messages: list[Message] = []
-                    msg_to_attachments: list[tuple[Message, list[MessageAttachment]]] = []
+                    msg_to_attachments: list[
+                        tuple[Message, list[MessageAttachment]]
+                    ] = []
                     for msg in messages:
                         new_message = Message(
                             chat_id=new_chat.id,

@@ -428,10 +428,12 @@ class SandboxService:
     ) -> None:
         if not custom_env_vars:
             return
-        await asyncio.gather(*[
-            self.provider.add_secret(sandbox_id, env_var["key"], env_var["value"])
-            for env_var in custom_env_vars
-        ])
+        await asyncio.gather(
+            *[
+                self.provider.add_secret(sandbox_id, env_var["key"], env_var["value"])
+                for env_var in custom_env_vars
+            ]
+        )
 
     async def _setup_github_token(self, sandbox_id: str, github_token: str) -> None:
         script_content = '#!/bin/sh\\necho "$GITHUB_TOKEN"'
@@ -563,7 +565,11 @@ class SandboxService:
                 tasks.append(self._setup_codex_auth(sandbox_id, codex_auth_json))
 
         if openrouter_api_key:
-            tasks.append(self._setup_anthropic_bridge(sandbox_id, openrouter_api_key, skip_secret=is_fork))
+            tasks.append(
+                self._setup_anthropic_bridge(
+                    sandbox_id, openrouter_api_key, skip_secret=is_fork
+                )
+            )
 
         await asyncio.gather(*tasks)
 
