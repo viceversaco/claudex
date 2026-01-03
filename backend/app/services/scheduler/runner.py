@@ -44,18 +44,13 @@ async def execute_task_in_sandbox(
     from app.prompts.system_prompt import build_system_prompt_for_chat
     from app.services.streaming.orchestrator import run_chat_stream
 
-    user_data = {
-        "id": str(user.id),
-        "email": user.email,
-        "username": user.username,
-    }
-
     chat_data = {
         "id": str(chat.id),
         "user_id": str(user.id),
         "title": chat.title,
         "sandbox_id": chat.sandbox_id,
         "session_id": None,
+        "sandbox_provider": chat.sandbox_provider,
     }
 
     system_prompt = build_system_prompt_for_chat(chat.sandbox_id, user_settings)
@@ -66,7 +61,6 @@ async def execute_task_in_sandbox(
         prompt=scheduled_task.prompt_message,
         system_prompt=system_prompt,
         custom_instructions=custom_instructions,
-        user_data=user_data,
         chat_data=chat_data,
         model_id=model_id,
         sandbox_service=sandbox_service,

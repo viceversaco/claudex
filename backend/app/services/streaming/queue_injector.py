@@ -4,11 +4,9 @@ import json
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from sqlalchemy import select
-
-from app.models.db_models import Chat, Message, MessageRole, MessageStreamStatus
+from app.models.db_models import Message, MessageRole, MessageStreamStatus
 from app.services.message import MessageService
-from app.services.queue import QueueService
+from app.services.queue import QueueService, serialize_message_attachments
 from app.services.streaming.events import StreamEvent
 from app.utils.redis import redis_connection
 
@@ -24,11 +22,13 @@ class QueueInjector:
         transport: BaseSandboxTransport,
         publisher: StreamPublisher,
         session_factory: Any,
+        session_id: str | None = None,
     ) -> None:
         self.chat_id = chat_id
         self.transport = transport
         self.publisher = publisher
         self.session_factory = session_factory
+        self.session_id = session_id
 
     async def check_and_inject(self) -> bool:
         async with redis_connection() as redis:
@@ -48,8 +48,7 @@ class QueueInjector:
 
         await self._publish_injection_event(queued_msg, user_message, assistant_message)
 
-        session_id = await self._get_current_session_id()
-        injection_msg = self._build_injection_message(queued_msg, session_id)
+        injection_msg = self._build_injection_message(queued_msg, self.session_id)
 
         await self.transport.write(json.dumps(injection_msg) + "\n")
         return True
@@ -85,35 +84,15 @@ class QueueInjector:
         user_message: Message,
         assistant_message: Message,
     ) -> None:
-        attachments_data: list[dict[str, Any]] | None = None
-
-        if queued_msg.get("attachments") and user_message.attachments:
-            attachments_data = [
-                {
-                    "id": str(att.id),
-                    "message_id": str(att.message_id),
-                    "file_url": att.file_url,
-                    "file_type": att.file_type,
-                    "filename": att.filename,
-                    "created_at": att.created_at.isoformat(),
-                }
-                for att in user_message.attachments
-            ]
-
-        await self.publisher.publish_queue_injected(
+        await self.publisher.publish_queue_event(
             queued_message_id=queued_msg["id"],
             user_message_id=str(user_message.id),
             assistant_message_id=str(assistant_message.id),
             content=queued_msg["content"],
             model_id=queued_msg["model_id"],
-            attachments=attachments_data,
+            attachments=serialize_message_attachments(queued_msg, user_message),
+            injected_inline=True,
         )
-
-    async def _get_current_session_id(self) -> str | None:
-        async with self.session_factory() as db:
-            query = select(Chat.session_id).filter(Chat.id == UUID(self.chat_id))
-            result = await db.execute(query)
-            return result.scalar_one_or_none()
 
     def _build_injection_message(
         self,

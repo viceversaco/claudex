@@ -1,7 +1,7 @@
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
 from redis.asyncio import Redis
@@ -13,7 +13,30 @@ from app.constants import (
 )
 from app.models.schemas.queue import QueuedMessage, QueueListResponse
 
+if TYPE_CHECKING:
+    from app.models.db_models import Message
+
 logger = logging.getLogger(__name__)
+
+
+def serialize_message_attachments(
+    queued_msg: dict[str, Any],
+    user_message: "Message",
+) -> list[dict[str, Any]] | None:
+    if not queued_msg.get("attachments") or not user_message.attachments:
+        return None
+
+    return [
+        {
+            "id": str(att.id),
+            "message_id": str(att.message_id),
+            "file_url": att.file_url,
+            "file_type": att.file_type,
+            "filename": att.filename,
+            "created_at": att.created_at.isoformat(),
+        }
+        for att in user_message.attachments
+    ]
 
 
 class QueueService:

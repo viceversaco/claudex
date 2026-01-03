@@ -7,21 +7,13 @@ from uuid import UUID
 
 from sqlalchemy import select
 
-from app.models.db_models import Chat, Message, User
+from app.models.db_models import Chat, Message
 
 logger = logging.getLogger(__name__)
 
 
-def hydrate_user_and_chat(
-    user_data: dict[str, Any], chat_data: dict[str, Any]
-) -> tuple[User, Chat]:
-    user = User(
-        id=UUID(user_data["id"]),
-        email=user_data["email"],
-        username=user_data["username"],
-    )
-
-    chat = Chat(
+def hydrate_chat(chat_data: dict[str, Any]) -> Chat:
+    return Chat(
         id=UUID(chat_data["id"]),
         user_id=UUID(chat_data["user_id"]),
         title=chat_data["title"],
@@ -29,7 +21,6 @@ def hydrate_user_and_chat(
         session_id=chat_data.get("session_id"),
         sandbox_provider=chat_data.get("sandbox_provider"),
     )
-    return user, chat
 
 
 class SessionUpdateCallback:

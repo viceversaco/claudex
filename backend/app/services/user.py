@@ -171,9 +171,3 @@ class UserService(BaseDbService[UserSettings]):
     async def check_message_limit(self, user_id: UUID) -> bool:
         remaining = await self.get_remaining_messages(user_id)
         return remaining == -1 or remaining > 0
-
-    async def get_user_by_id(self, user_id: UUID) -> User | None:
-        async with self.session_factory() as db:
-            query = select(User).filter(User.id == user_id)
-            result = await db.execute(query)
-            return result.scalar_one_or_none()

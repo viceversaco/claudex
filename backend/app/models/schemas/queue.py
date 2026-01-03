@@ -12,10 +12,6 @@ class QueuedMessageBase(BaseModel):
     thinking_mode: str | None = None
 
 
-class QueueMessageCreate(QueuedMessageBase):
-    pass
-
-
 class QueueMessageUpdate(BaseModel):
     content: str = Field(..., min_length=1, max_length=100000)
 

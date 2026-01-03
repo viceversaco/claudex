@@ -689,11 +689,6 @@ class ChatService(BaseDbService[Chat]):
             prompt=prompt,
             system_prompt=system_prompt,
             custom_instructions=custom_instructions,
-            user_data={
-                "id": str(user.id),
-                "email": user.email,
-                "username": user.username,
-            },
             chat_data={
                 "id": str(chat.id),
                 "user_id": str(chat.user_id),

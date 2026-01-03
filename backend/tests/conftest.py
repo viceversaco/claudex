@@ -298,11 +298,6 @@ class TestChatService(ChatService):
         mock_task.request.id = task_id
         mock_task.update_state = MagicMock()
 
-        user_data = {
-            "id": str(user.id),
-            "email": user.email,
-            "username": user.username,
-        }
         chat_data = {
             "id": str(chat.id),
             "user_id": str(chat.user_id),
@@ -317,7 +312,6 @@ class TestChatService(ChatService):
             prompt=prompt,
             system_prompt=system_prompt,
             custom_instructions=custom_instructions,
-            user_data=user_data,
             chat_data=chat_data,
             model_id=model_id,
             sandbox_service=self._test_sandbox_service,

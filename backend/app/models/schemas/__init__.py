@@ -79,7 +79,6 @@ from .queue import (
     QueueAddResponse,
     QueuedMessage,
     QueueListResponse,
-    QueueMessageCreate,
     QueueMessageUpdate,
 )
 
@@ -175,6 +174,5 @@ __all__ = [
     "QueueAddResponse",
     "QueuedMessage",
     "QueueListResponse",
-    "QueueMessageCreate",
     "QueueMessageUpdate",
 ]

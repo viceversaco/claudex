@@ -13,18 +13,18 @@ from celery.exceptions import Ignore
 from sqlalchemy import select
 
 from app.db.session import get_celery_session
-from app.models.db_models import Chat, Message, MessageRole, MessageStreamStatus
+from app.models.db_models import Chat, Message, MessageRole, MessageStreamStatus, User
 from app.prompts.system_prompt import build_system_prompt_for_chat
 from app.services.exceptions import ClaudeAgentException, UserException
 from app.services.message import MessageService
-from app.services.queue import QueueService
+from app.services.queue import QueueService, serialize_message_attachments
 from app.services.sandbox import SandboxService
 from app.services.sandbox_providers import create_sandbox_provider
 from app.services.streaming.cancellation import CancellationHandler, StreamCancelled
 from app.services.streaming.events import StreamEvent
 from app.services.streaming.publisher import StreamPublisher
 from app.services.streaming.queue_injector import QueueInjector
-from app.services.streaming.session import SessionUpdateCallback, hydrate_user_and_chat
+from app.services.streaming.session import SessionUpdateCallback, hydrate_chat
 from app.services.user import UserService
 from app.utils.redis import redis_connection
 
@@ -166,6 +166,7 @@ class StreamOrchestrator:
             transport=transport,
             publisher=self.publisher,
             session_factory=ctx.session_factory,
+            session_id=ctx.chat.session_id,
         )
 
     async def _finalize_stream(
@@ -352,29 +353,13 @@ class StreamOrchestrator:
         user_message: Message,
         assistant_message: Message,
     ) -> None:
-        """Publish SSE event to notify frontend of queue processing."""
-        attachments_data: list[dict[str, Any]] | None = None
-
-        if next_msg.get("attachments") and user_message.attachments:
-            attachments_data = [
-                {
-                    "id": str(att.id),
-                    "message_id": str(att.message_id),
-                    "file_url": att.file_url,
-                    "file_type": att.file_type,
-                    "filename": att.filename,
-                    "created_at": att.created_at.isoformat(),
-                }
-                for att in user_message.attachments
-            ]
-
-        await self.publisher.publish_queue_processing(
+        await self.publisher.publish_queue_event(
             queued_message_id=next_msg["id"],
             user_message_id=str(user_message.id),
             assistant_message_id=str(assistant_message.id),
             content=next_msg["content"],
             model_id=next_msg["model_id"],
-            attachments=attachments_data,
+            attachments=serialize_message_attachments(next_msg, user_message),
         )
 
     async def _spawn_queue_continuation_task(
@@ -389,8 +374,6 @@ class StreamOrchestrator:
         user_service = UserService(session_factory=ctx.session_factory)
         user_settings = await user_service.get_user_settings(ctx.chat.user_id, db=None)
 
-        user = await user_service.get_user_by_id(ctx.chat.user_id)
-
         system_prompt = build_system_prompt_for_chat(
             ctx.chat.sandbox_id or "",
             user_settings,
@@ -402,11 +385,6 @@ class StreamOrchestrator:
             custom_instructions=user_settings.custom_instructions
             if user_settings
             else None,
-            user_data={
-                "id": str(ctx.chat.user_id),
-                "email": user.email if user else "",
-                "username": user.username if user else "",
-            },
             chat_data={
                 "id": ctx.chat_id,
                 "user_id": str(ctx.chat.user_id),
@@ -442,7 +420,6 @@ async def run_chat_stream(
     prompt: str,
     system_prompt: str,
     custom_instructions: str | None,
-    user_data: dict[str, Any],
     chat_data: dict[str, Any],
     model_id: str,
     sandbox_service: SandboxService,
@@ -458,7 +435,7 @@ async def run_chat_stream(
 ) -> str:
     from app.services.claude_agent import ClaudeAgentService
 
-    user, chat = hydrate_user_and_chat(user_data, chat_data)
+    chat = hydrate_chat(chat_data)
 
     chat_id = str(chat.id)
     session_container: dict[str, Any] = {"session_id": session_id}
@@ -486,10 +463,12 @@ async def run_chat_stream(
                     session_container=session_container,
                     sandbox_id=str(chat.sandbox_id) if chat.sandbox_id else "",
                     sandbox_provider=chat.sandbox_provider or "docker",
-                    user_id=str(user.id),
+                    user_id=str(chat.user_id),
                     model_id=model_id,
                     context_usage_trigger=context_usage_trigger,
                 )
+
+                user = User(id=chat.user_id)
 
                 stream = ai_service.get_ai_stream(
                     prompt=prompt,
@@ -513,7 +492,7 @@ async def run_chat_stream(
                         session_id=session_id,
                         sandbox_id=sandbox_id_str,
                         sandbox_provider=chat.sandbox_provider or "docker",
-                        user_id=str(user.id),
+                        user_id=str(chat.user_id),
                         model_id=model_id,
                     )
 
@@ -555,7 +534,6 @@ async def initialize_and_run_chat(
     prompt: str,
     system_prompt: str,
     custom_instructions: str | None,
-    user_data: dict[str, Any],
     chat_data: dict[str, Any],
     model_id: str,
     permission_mode: str,
@@ -569,7 +547,7 @@ async def initialize_and_run_chat(
 ) -> str:
     async with get_celery_session() as (SessionFactory, _):
         async with SessionFactory() as db:
-            user_id = UUID(user_data["id"])
+            user_id = UUID(chat_data["user_id"])
             user_service = UserService(session_factory=SessionFactory)
 
             try:
@@ -594,7 +572,6 @@ async def initialize_and_run_chat(
                 prompt=prompt,
                 system_prompt=system_prompt,
                 custom_instructions=custom_instructions,
-                user_data=user_data,
                 chat_data=chat_data,
                 model_id=model_id,
                 sandbox_service=sandbox_service,
