@@ -428,21 +428,23 @@ class SandboxService:
     ) -> None:
         if not custom_env_vars:
             return
-        await asyncio.gather(
-            *[
-                self.provider.add_secret(sandbox_id, env_var["key"], env_var["value"])
-                for env_var in custom_env_vars
-            ]
-        )
+        async with asyncio.TaskGroup() as tg:
+            for env_var in custom_env_vars:
+                tg.create_task(
+                    self.provider.add_secret(sandbox_id, env_var["key"], env_var["value"])
+                )
 
     async def _setup_github_token(self, sandbox_id: str, github_token: str) -> None:
         script_content = '#!/bin/sh\\necho "$GITHUB_TOKEN"'
-        await asyncio.gather(
-            self.provider.add_secret(sandbox_id, "GITHUB_TOKEN", github_token),
-            self.provider.add_secret(
-                sandbox_id, "GIT_ASKPASS", "/home/user/.git-askpass.sh"
-            ),
-        )
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(
+                self.provider.add_secret(sandbox_id, "GITHUB_TOKEN", github_token)
+            )
+            tg.create_task(
+                self.provider.add_secret(
+                    sandbox_id, "GIT_ASKPASS", "/home/user/.git-askpass.sh"
+                )
+            )
 
         setup_cmd = (
             f"echo -e '{script_content}' > /home/user/.git-askpass.sh && "
@@ -571,7 +573,9 @@ class SandboxService:
                 )
             )
 
-        await asyncio.gather(*tasks)
+        async with asyncio.TaskGroup() as tg:
+            for task in tasks:
+                tg.create_task(task)
 
     async def create_checkpoint(self, sandbox_id: str, message_id: str) -> str | None:
         self._validate_message_id(message_id)
