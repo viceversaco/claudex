@@ -431,7 +431,9 @@ class SandboxService:
         async with asyncio.TaskGroup() as tg:
             for env_var in custom_env_vars:
                 tg.create_task(
-                    self.provider.add_secret(sandbox_id, env_var["key"], env_var["value"])
+                    self.provider.add_secret(
+                        sandbox_id, env_var["key"], env_var["value"]
+                    )
                 )
 
     async def _setup_github_token(self, sandbox_id: str, github_token: str) -> None:
