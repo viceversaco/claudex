@@ -1,6 +1,15 @@
-import type { AssistantStreamEvent } from './chat.types';
+import type { AssistantStreamEvent, MessageAttachment } from './chat.types';
 
 export type StreamState = 'idle' | 'loading' | 'streaming' | 'error';
+
+export interface QueueProcessingData {
+  queuedMessageId: string;
+  userMessageId: string;
+  assistantMessageId: string;
+  content: string;
+  modelId: string;
+  attachments?: MessageAttachment[];
+}
 
 export interface ApiStreamResponse {
   source: EventSource;
@@ -19,6 +28,7 @@ export interface ActiveStream {
     onChunk?: (event: AssistantStreamEvent, messageId: string) => void;
     onComplete?: (messageId?: string) => void;
     onError?: (error: Error, messageId?: string) => void;
+    onQueueProcess?: (data: QueueProcessingData) => void;
   };
 }
 

@@ -2,6 +2,7 @@ import { useRef, useState, useCallback, useEffect, useLayoutEffect, memo, useMem
 import { useInView } from 'react-intersection-observer';
 import { findLastBotMessageIndex } from '@/utils/message';
 import { Message } from '@/components/chat/message-bubble/Message';
+import { PendingMessage } from '@/components/chat/message-bubble/PendingMessage';
 import { Input } from '@/components/chat/message-input/Input';
 import { ChatSkeleton } from './ChatSkeleton';
 import { LoadingIndicator } from './LoadingIndicator';
@@ -16,7 +17,7 @@ import type {
   CustomPrompt,
 } from '@/types';
 import type { SandboxProviderType } from '@/config/constants';
-import { useStreamStore } from '@/store';
+import { useStreamStore, useMessageQueueStore, EMPTY_QUEUE } from '@/store';
 import { ChatProvider } from '@/contexts/ChatContext';
 
 const SCROLL_THRESHOLD_PERCENT = 20;
@@ -95,6 +96,38 @@ export const Chat = memo(function Chat({
     });
     return ids;
   }, [activeStreams, chatId]);
+
+  const pendingMessages = useMessageQueueStore((state) =>
+    chatId ? (state.queues.get(chatId) ?? EMPTY_QUEUE) : EMPTY_QUEUE,
+  );
+  const updateQueuedMessage = useMessageQueueStore((state) => state.updateQueuedMessage);
+  const removeQueuedMessage = useMessageQueueStore((state) => state.removeAndSync);
+  const fetchQueue = useMessageQueueStore((state) => state.fetchQueue);
+
+  useEffect(() => {
+    if (chatId) {
+      void fetchQueue(chatId);
+    }
+  }, [chatId, fetchQueue]);
+
+  const handleCancelPending = useCallback(
+    (messageId: string) => {
+      if (chatId) {
+        removeQueuedMessage(chatId, messageId);
+      }
+    },
+    [chatId, removeQueuedMessage],
+  );
+
+  const handleEditPending = useCallback(
+    (messageId: string, newContent: string) => {
+      if (chatId) {
+        updateQueuedMessage(chatId, messageId, newContent);
+      }
+    },
+    [chatId, updateQueuedMessage],
+  );
+
   const chatWindowRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -314,6 +347,14 @@ export const Chat = memo(function Chat({
                   />
                 );
               })}
+              {pendingMessages.map((pending) => (
+                <PendingMessage
+                  key={pending.id}
+                  message={pending}
+                  onCancel={handleCancelPending}
+                  onEdit={handleEditPending}
+                />
+              ))}
               {error && <ErrorMessage error={error} onDismiss={onDismissError} />}
             </div>
           )}
@@ -335,7 +376,8 @@ export const Chat = memo(function Chat({
                 onSubmit={onMessageSend}
                 onAttach={onAttach}
                 attachedFiles={attachedFiles}
-                isLoading={isLoading || isStreaming}
+                isLoading={isLoading}
+                isStreaming={isStreaming}
                 onStopStream={onStopStream}
                 selectedModelId={selectedModelId}
                 onModelChange={onModelChange}
@@ -343,6 +385,7 @@ export const Chat = memo(function Chat({
                 showAttachedFilesPreview={true}
                 contextUsage={contextUsage}
                 showTip={false}
+                chatId={chatId}
               />
             </div>
           </div>

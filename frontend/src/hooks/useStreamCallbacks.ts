@@ -12,6 +12,7 @@ import type {
   Message,
   PermissionRequest,
   StreamState,
+  QueueProcessingData,
 } from '@/types';
 import { useMessageCache } from '@/hooks/useMessageCache';
 import { streamService } from '@/services/streamService';
@@ -35,6 +36,7 @@ interface UseStreamCallbacksResult {
   onChunk: (event: AssistantStreamEvent, messageId: string) => void;
   onComplete: () => void;
   onError: (error: Error, messageId?: string) => void;
+  onQueueProcess: (data: QueueProcessingData) => void;
   startStream: (request: StreamOptions['request']) => Promise<string>;
   replayStream: (messageId: string) => Promise<string>;
   stopStream: (messageId: string) => Promise<void>;
@@ -64,6 +66,7 @@ export function useStreamCallbacks({
     onChunk?: (event: AssistantStreamEvent, messageId: string) => void;
     onComplete?: (messageId?: string) => void;
     onError?: (error: Error, messageId?: string) => void;
+    onQueueProcess?: (data: QueueProcessingData) => void;
   } | null>(null);
 
   const pendingUserMessageIdRef = useRef<string | null>(null);
@@ -191,9 +194,42 @@ export function useStreamCallbacks({
     [setError, setStreamState, setCurrentMessageId, setMessages, removeMessagesFromCache],
   );
 
+  const onQueueProcess = useCallback(
+    (data: QueueProcessingData) => {
+      if (!chatId) return;
+
+      const userMessage: Message = {
+        id: data.userMessageId,
+        chat_id: chatId,
+        role: 'user',
+        content: data.content,
+        created_at: new Date().toISOString(),
+        attachments: data.attachments || [],
+        is_bot: false,
+      };
+
+      const assistantMessage: Message = {
+        id: data.assistantMessageId,
+        chat_id: chatId,
+        role: 'assistant',
+        content: '',
+        created_at: new Date().toISOString(),
+        model_id: data.modelId,
+        attachments: [],
+        is_bot: true,
+      };
+
+      setMessages((prev) => [...prev, userMessage, assistantMessage]);
+      addMessageToCache(userMessage);
+      addMessageToCache(assistantMessage);
+      setCurrentMessageId(data.assistantMessageId);
+    },
+    [chatId, setMessages, addMessageToCache, setCurrentMessageId],
+  );
+
   useEffect(() => {
-    optionsRef.current = chatId ? { chatId, onChunk, onComplete, onError } : null;
-  }, [chatId, onChunk, onComplete, onError]);
+    optionsRef.current = chatId ? { chatId, onChunk, onComplete, onError, onQueueProcess } : null;
+  }, [chatId, onChunk, onComplete, onError, onQueueProcess]);
 
   const startStream = useCallback(async (request: StreamOptions['request']): Promise<string> => {
     const currentOptions = optionsRef.current;
@@ -207,6 +243,7 @@ export function useStreamCallbacks({
       onChunk: currentOptions.onChunk,
       onComplete: currentOptions.onComplete,
       onError: currentOptions.onError,
+      onQueueProcess: currentOptions.onQueueProcess,
     };
 
     return streamService.startStream(streamOptions);
@@ -224,6 +261,7 @@ export function useStreamCallbacks({
       onChunk: currentOptions.onChunk,
       onComplete: currentOptions.onComplete,
       onError: currentOptions.onError,
+      onQueueProcess: currentOptions.onQueueProcess,
     });
   }, []);
 
@@ -239,6 +277,7 @@ export function useStreamCallbacks({
     onChunk,
     onComplete,
     onError,
+    onQueueProcess,
     startStream,
     replayStream,
     stopStream,

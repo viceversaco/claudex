@@ -81,6 +81,15 @@ export function useChatStreaming({
   const prevChatIdRef = useRef<string | undefined>(chatId);
   const lastConnectedStreamRef = useRef<string | null>(null);
   const currentMessageIdRef = useRef<string | null>(null);
+  const sendMessageRef = useRef<
+    | ((
+        prompt: string,
+        chatIdOverride?: string,
+        userMessage?: Message,
+        filesToSend?: File[],
+      ) => Promise<void>)
+    | null
+  >(null);
 
   const updateStreamCallbacks = useStreamStore((state) => state.updateStreamCallbacks);
 
@@ -96,6 +105,7 @@ export function useChatStreaming({
     onChunk,
     onComplete,
     onError,
+    onQueueProcess,
     startStream,
     replayStream,
     stopStream,
@@ -133,6 +143,7 @@ export function useChatStreaming({
           onChunk,
           onComplete,
           onError,
+          onQueueProcess,
         });
       } else if (!existingStream) {
         lastConnectedStreamRef.current = null;
@@ -143,7 +154,7 @@ export function useChatStreaming({
 
     const unsubscribe = useStreamStore.subscribe(checkAndUpdateCallbacks);
     return () => unsubscribe();
-  }, [chatId, updateStreamCallbacks, onChunk, onComplete, onError]);
+  }, [chatId, updateStreamCallbacks, onChunk, onComplete, onError, onQueueProcess]);
 
   useEffect(() => {
     if (prevChatIdRef.current !== chatId) {
@@ -207,6 +218,10 @@ export function useChatStreaming({
     isLoading,
     isStreaming,
   });
+
+  useEffect(() => {
+    sendMessageRef.current = sendMessage;
+  }, [sendMessage]);
 
   useStreamReconnect({
     chatId,

@@ -13,8 +13,11 @@ from celery.exceptions import Ignore
 from sqlalchemy import select
 
 from app.db.session import get_celery_session
-from app.models.db_models import Chat, Message, MessageStreamStatus
+from app.models.db_models import Chat, Message, MessageRole, MessageStreamStatus
+from app.prompts.system_prompt import build_system_prompt_for_chat
 from app.services.exceptions import ClaudeAgentException, UserException
+from app.services.message import MessageService
+from app.services.queue import QueueService
 from app.services.sandbox import SandboxService
 from app.services.sandbox_providers import create_sandbox_provider
 from app.services.streaming.cancellation import CancellationHandler, StreamCancelled
@@ -22,6 +25,7 @@ from app.services.streaming.events import StreamEvent
 from app.services.streaming.publisher import StreamPublisher
 from app.services.streaming.session import SessionUpdateCallback, hydrate_user_and_chat
 from app.services.user import UserService
+from app.utils.redis import redis_connection
 
 if TYPE_CHECKING:
     from celery import Task
@@ -145,8 +149,6 @@ class StreamOrchestrator:
         total_cost = ctx.ai_service.get_total_cost_usd()
         final_content = json.dumps(ctx.events, ensure_ascii=False)
 
-        await self.publisher.publish_complete()
-
         if ctx.assistant_message_id and ctx.events:
             await self._save_message_content(
                 ctx.assistant_message_id,
@@ -163,6 +165,11 @@ class StreamOrchestrator:
                 ctx.assistant_message_id,
                 ctx.session_factory,
             )
+            queue_processed = await self._process_queue_if_available(ctx)
+            if not queue_processed:
+                await self.publisher.publish_complete()
+        else:
+            await self.publisher.publish_complete()
 
         return StreamOutcome(
             events=ctx.events,
@@ -249,6 +256,150 @@ class StreamOrchestrator:
         except Exception as exc:
             logger.warning("Failed to create checkpoint: %s", exc)
 
+    async def _process_queue_if_available(self, ctx: StreamContext) -> bool:
+        """Check for queued messages and process the next one if available."""
+        try:
+            next_msg = await self._pop_next_queued_message(ctx.chat_id)
+            if not next_msg:
+                return False
+
+            messages = await self._create_queue_messages(ctx, next_msg)
+            if not messages:
+                return False
+
+            user_message, assistant_message = messages
+
+            await self._publish_queue_processing_event(
+                next_msg, user_message, assistant_message
+            )
+
+            await self._spawn_queue_continuation_task(ctx, next_msg, assistant_message)
+
+            logger.info(
+                "Queued message %s for chat %s has been processed",
+                next_msg["id"],
+                ctx.chat_id,
+            )
+            return True
+
+        except Exception as exc:
+            logger.error("Failed to process queued message: %s", exc)
+            return False
+
+    async def _pop_next_queued_message(self, chat_id: str) -> dict[str, Any] | None:
+        """Pop the next message from the queue if available."""
+        async with redis_connection() as redis:
+            queue_service = QueueService(redis)
+            if not await queue_service.has_messages(chat_id):
+                return None
+            return await queue_service.pop_next_message(chat_id)
+
+    async def _create_queue_messages(
+        self,
+        ctx: StreamContext,
+        next_msg: dict[str, Any],
+    ) -> tuple[Message, Message] | None:
+        """Create user and assistant message records for the queued message."""
+        message_service = MessageService(session_factory=ctx.session_factory)
+
+        attachments = next_msg.get("attachments")
+
+        user_message = await message_service.create_message(
+            UUID(ctx.chat_id),
+            next_msg["content"],
+            MessageRole.USER,
+            attachments=attachments,
+        )
+
+        assistant_message = await message_service.create_message(
+            UUID(ctx.chat_id),
+            "",
+            MessageRole.ASSISTANT,
+            model_id=next_msg["model_id"],
+            stream_status=MessageStreamStatus.IN_PROGRESS,
+        )
+
+        return user_message, assistant_message
+
+    async def _publish_queue_processing_event(
+        self,
+        next_msg: dict[str, Any],
+        user_message: Message,
+        assistant_message: Message,
+    ) -> None:
+        """Publish SSE event to notify frontend of queue processing."""
+        attachments_data: list[dict[str, Any]] | None = None
+
+        if next_msg.get("attachments") and user_message.attachments:
+            attachments_data = [
+                {
+                    "id": str(att.id),
+                    "message_id": str(att.message_id),
+                    "file_url": att.file_url,
+                    "file_type": att.file_type,
+                    "filename": att.filename,
+                    "created_at": att.created_at.isoformat(),
+                }
+                for att in user_message.attachments
+            ]
+
+        await self.publisher.publish_queue_processing(
+            queued_message_id=next_msg["id"],
+            user_message_id=str(user_message.id),
+            assistant_message_id=str(assistant_message.id),
+            content=next_msg["content"],
+            model_id=next_msg["model_id"],
+            attachments=attachments_data,
+        )
+
+    async def _spawn_queue_continuation_task(
+        self,
+        ctx: StreamContext,
+        next_msg: dict[str, Any],
+        assistant_message: Message,
+    ) -> None:
+        """Spawn Celery task to process the queued message."""
+        from app.tasks.chat_processor import process_chat
+
+        user_service = UserService(session_factory=ctx.session_factory)
+        user_settings = await user_service.get_user_settings(ctx.chat.user_id, db=None)
+
+        user = await user_service.get_user_by_id(ctx.chat.user_id)
+
+        system_prompt = build_system_prompt_for_chat(
+            ctx.chat.sandbox_id or "",
+            user_settings,
+        )
+
+        process_chat.delay(
+            prompt=next_msg["content"],
+            system_prompt=system_prompt,
+            custom_instructions=user_settings.custom_instructions
+            if user_settings
+            else None,
+            user_data={
+                "id": str(ctx.chat.user_id),
+                "email": user.email if user else "",
+                "username": user.username if user else "",
+            },
+            chat_data={
+                "id": ctx.chat_id,
+                "user_id": str(ctx.chat.user_id),
+                "title": ctx.chat.title,
+                "sandbox_id": ctx.chat.sandbox_id,
+                "session_id": ctx.chat.session_id,
+                "sandbox_provider": ctx.chat.sandbox_provider,
+            },
+            permission_mode=next_msg.get("permission_mode", "auto"),
+            model_id=next_msg["model_id"],
+            session_id=ctx.chat.session_id,
+            assistant_message_id=str(assistant_message.id),
+            thinking_mode=next_msg.get("thinking_mode"),
+            attachments=next_msg.get("attachments"),
+            is_custom_prompt=False,
+            is_queue_continuation=True,
+        )
+
 
 @asynccontextmanager
 async def _get_session_factory(
@@ -278,6 +429,7 @@ async def run_chat_stream(
     attachments: list[dict[str, Any]] | None = None,
     is_custom_prompt: bool = False,
     session_factory: SessionFactoryType | None = None,
+    is_queue_continuation: bool = False,
 ) -> str:
     from app.services.claude_agent import ClaudeAgentService
 
@@ -291,7 +443,7 @@ async def run_chat_stream(
     result: str = ""
 
     try:
-        await publisher.connect(task)
+        await publisher.connect(task, skip_stream_delete=is_queue_continuation)
 
         async with _get_session_factory(session_factory) as session_local:
             cancellation = CancellationHandler(chat_id, publisher.redis)
@@ -388,6 +540,7 @@ async def initialize_and_run_chat(
     attachments: list[dict[str, Any]] | None,
     context_usage_trigger: Callable[..., Any] | None = None,
     is_custom_prompt: bool = False,
+    is_queue_continuation: bool = False,
 ) -> str:
     async with get_celery_session() as (SessionFactory, _):
         async with SessionFactory() as db:
@@ -427,6 +580,7 @@ async def initialize_and_run_chat(
                 thinking_mode=thinking_mode,
                 attachments=attachments,
                 is_custom_prompt=is_custom_prompt,
+                is_queue_continuation=is_queue_continuation,
             )
         finally:
             await sandbox_service.cleanup()

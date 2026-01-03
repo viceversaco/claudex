@@ -41,6 +41,10 @@ from app.models.schemas import (
     PaginatedChats,
     PaginationParams,
     PermissionRespondResponse,
+    QueueAddResponse,
+    QueuedMessage,
+    QueueListResponse,
+    QueueMessageUpdate,
     RestoreRequest,
 )
 from app.services.chat import ChatService
@@ -51,6 +55,7 @@ from app.services.exceptions import (
     SandboxException,
 )
 from app.services.permission_manager import PermissionManager
+from app.services.queue import QueueService
 from app.utils.redis import redis_connection, redis_pubsub
 from app.models.schemas.errors import HTTPErrorResponse
 
@@ -734,6 +739,171 @@ async def respond_to_permission(
         logger.error(
             "Redis error responding to permission %s: %s", request_id, e, exc_info=True
         )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service temporarily unavailable",
+        )
+
+
+@router.post(
+    "/chats/{chat_id}/queue",
+    response_model=QueueAddResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        401: {"model": HTTPErrorResponse, "description": "Unauthorized"},
+        404: {"model": HTTPErrorResponse, "description": "Chat not found"},
+        429: {"model": HTTPErrorResponse, "description": "Queue is full"},
+        500: {"model": HTTPErrorResponse, "description": "Internal server error"},
+    },
+)
+async def queue_message(
+    chat_id: UUID,
+    content: str = Form(...),
+    model_id: str = Form(...),
+    permission_mode: Literal["plan", "ask", "auto"] = Form("auto"),
+    thinking_mode: str | None = Form(None),
+    attached_files: list[UploadFile] = [],
+    current_user: User = Depends(get_current_user),
+    chat_service: ChatService = Depends(get_chat_service),
+) -> QueueAddResponse:
+    chat = await chat_service.get_chat(chat_id, current_user)
+
+    attachments: list[dict[str, Any]] | None = None
+    if attached_files:
+        attachments = list(
+            await asyncio.gather(
+                *[
+                    chat_service.storage_service.save_file(
+                        file, sandbox_id=chat.sandbox_id
+                    )
+                    for file in attached_files
+                ]
+            )
+        )
+
+    try:
+        async with redis_connection() as redis:
+            queue_service = QueueService(redis)
+            message_id, position = await queue_service.add_message(
+                str(chat_id),
+                content,
+                model_id,
+                permission_mode=permission_mode,
+                thinking_mode=thinking_mode,
+                attachments=attachments,
+            )
+            return QueueAddResponse(id=message_id, position=position, attachments=attachments)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=str(e),
+        )
+    except RedisError as e:
+        logger.error("Redis error queueing message: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service temporarily unavailable",
+        )
+
+
+@router.get(
+    "/chats/{chat_id}/queue",
+    response_model=QueueListResponse,
+    responses={
+        401: {"model": HTTPErrorResponse, "description": "Unauthorized"},
+        404: {"model": HTTPErrorResponse, "description": "Chat not found"},
+        500: {"model": HTTPErrorResponse, "description": "Internal server error"},
+    },
+)
+async def get_queue(
+    chat_id: UUID,
+    current_user: User = Depends(get_current_user),
+    chat_service: ChatService = Depends(get_chat_service),
+) -> QueueListResponse:
+    await _ensure_chat_access(chat_id, chat_service, current_user)
+
+    try:
+        async with redis_connection() as redis:
+            queue_service = QueueService(redis)
+            return await queue_service.get_queue(str(chat_id))
+    except RedisError as e:
+        logger.error("Redis error getting queue: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service temporarily unavailable",
+        )
+
+
+@router.patch(
+    "/chats/{chat_id}/queue/{message_id}",
+    response_model=QueuedMessage,
+    responses={
+        401: {"model": HTTPErrorResponse, "description": "Unauthorized"},
+        404: {"model": HTTPErrorResponse, "description": "Message not found"},
+        500: {"model": HTTPErrorResponse, "description": "Internal server error"},
+    },
+)
+async def update_queued_message(
+    chat_id: UUID,
+    message_id: UUID,
+    update: QueueMessageUpdate,
+    current_user: User = Depends(get_current_user),
+    chat_service: ChatService = Depends(get_chat_service),
+) -> QueuedMessage:
+    await _ensure_chat_access(chat_id, chat_service, current_user)
+
+    try:
+        async with redis_connection() as redis:
+            queue_service = QueueService(redis)
+            result = await queue_service.update_message(
+                str(chat_id), message_id, update.content
+            )
+            if result is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Queued message not found",
+                )
+            return result
+    except HTTPException:
+        raise
+    except RedisError as e:
+        logger.error("Redis error updating queued message: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service temporarily unavailable",
+        )
+
+
+@router.delete(
+    "/chats/{chat_id}/queue/{message_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        401: {"model": HTTPErrorResponse, "description": "Unauthorized"},
+        404: {"model": HTTPErrorResponse, "description": "Message not found"},
+        500: {"model": HTTPErrorResponse, "description": "Internal server error"},
+    },
+)
+async def delete_queued_message(
+    chat_id: UUID,
+    message_id: UUID,
+    current_user: User = Depends(get_current_user),
+    chat_service: ChatService = Depends(get_chat_service),
+) -> None:
+    await _ensure_chat_access(chat_id, chat_service, current_user)
+
+    try:
+        async with redis_connection() as redis:
+            queue_service = QueueService(redis)
+            success = await queue_service.remove_message(str(chat_id), message_id)
+            if not success:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Queued message not found",
+                )
+    except HTTPException:
+        raise
+    except RedisError as e:
+        logger.error("Redis error deleting queued message: %s", e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service temporarily unavailable",

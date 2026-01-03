@@ -10,11 +10,13 @@ interface StreamState {
   removeStream: (streamId: string) => void;
   getStream: (streamId: string) => ActiveStream | undefined;
   getStreamByChatAndMessage: (chatId: string, messageId: string) => ActiveStream | undefined;
+  getStreamByChat: (chatId: string) => ActiveStream | undefined;
   updateStreamCallbacks: (
     chatId: string,
     messageId: string,
     callbacks: ActiveStream['callbacks'],
   ) => void;
+  updateStreamMessageId: (chatId: string, oldMessageId: string, newMessageId: string) => void;
   abortStream: (streamId: string) => void;
   abortAllStreams: () => void;
   removeStreamMetadata: (chatId: string) => void;
@@ -118,6 +120,16 @@ export const useStreamStore = create<StreamState>((set, get) => ({
     return streamId ? state.activeStreams.get(streamId) : undefined;
   },
 
+  getStreamByChat: (chatId: string) => {
+    const state = get();
+    for (const stream of state.activeStreams.values()) {
+      if (stream.chatId === chatId && stream.isActive) {
+        return stream;
+      }
+    }
+    return undefined;
+  },
+
   updateStreamCallbacks: (
     chatId: string,
     messageId: string,
@@ -125,9 +137,33 @@ export const useStreamStore = create<StreamState>((set, get) => ({
   ) => {
     const stream = get().getStreamByChatAndMessage(chatId, messageId);
     if (stream && stream.isActive) {
-      // Mutate in place - callbacks are internal-only, no need to trigger subscribers
       stream.callbacks = callbacks;
     }
+  },
+
+  updateStreamMessageId: (chatId: string, oldMessageId: string, newMessageId: string) => {
+    set((state) => {
+      const streamId = state.streamIdByChatMessage.get(getChatMessageKey(chatId, oldMessageId));
+      if (!streamId) return state;
+
+      const stream = state.activeStreams.get(streamId);
+      if (!stream) return state;
+
+      stream.messageId = newMessageId;
+
+      const nextIndex = new Map(state.streamIdByChatMessage);
+      nextIndex.delete(getChatMessageKey(chatId, oldMessageId));
+      nextIndex.set(getChatMessageKey(chatId, newMessageId), streamId);
+
+      return {
+        streamIdByChatMessage: nextIndex,
+        activeStreamMetadata: upsertStreamMetadata(state.activeStreamMetadata, {
+          chatId: stream.chatId,
+          messageId: newMessageId,
+          startTime: stream.startTime,
+        }),
+      };
+    });
   },
 
   abortStream: (streamId: string) => {

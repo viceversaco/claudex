@@ -28,10 +28,15 @@ class StreamPublisher:
         self.chat_id = chat_id
         self._redis: Redis[str] | None = None
 
-    async def connect(self, task: Task[Any, Any]) -> None:
+    async def connect(
+        self, task: Task[Any, Any], skip_stream_delete: bool = False
+    ) -> None:
         try:
             self._redis = Redis.from_url(settings.REDIS_URL, decode_responses=True)
-            await self._redis.delete(REDIS_KEY_CHAT_STREAM.format(chat_id=self.chat_id))
+            if not skip_stream_delete:
+                await self._redis.delete(
+                    REDIS_KEY_CHAT_STREAM.format(chat_id=self.chat_id)
+                )
             await self._redis.setex(
                 REDIS_KEY_CHAT_TASK.format(chat_id=self.chat_id),
                 settings.TASK_TTL_SECONDS,
@@ -78,6 +83,27 @@ class StreamPublisher:
 
     async def publish_error(self, error: str) -> None:
         await self.publish("error", {"error": error})
+
+    async def publish_queue_processing(
+        self,
+        queued_message_id: str,
+        user_message_id: str,
+        assistant_message_id: str,
+        content: str,
+        model_id: str,
+        attachments: list[dict[str, Any]] | None = None,
+    ) -> None:
+        await self.publish(
+            "queue_processing",
+            {
+                "queued_message_id": queued_message_id,
+                "user_message_id": user_message_id,
+                "assistant_message_id": assistant_message_id,
+                "content": content,
+                "model_id": model_id,
+                "attachments": attachments,
+            },
+        )
 
     async def cleanup(self) -> None:
         if not self._redis:

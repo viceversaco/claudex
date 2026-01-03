@@ -20,6 +20,7 @@ def process_chat(
     thinking_mode: str | None = None,
     attachments: list[dict[str, Any]] | None = None,
     is_custom_prompt: bool = False,
+    is_queue_continuation: bool = False,
 ) -> str:
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -41,6 +42,7 @@ def process_chat(
                 attachments=attachments,
                 context_usage_trigger=fetch_context_token_usage.delay,
                 is_custom_prompt=is_custom_prompt,
+                is_queue_continuation=is_queue_continuation,
             )
         )
     finally:

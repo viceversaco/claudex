@@ -11,7 +11,7 @@ import { InputControls } from './InputControls';
 import { InputAttachments } from './InputAttachments';
 import { ReviewChipsBar } from './ReviewChipsBar';
 import { InputSuggestionsPanel } from './InputSuggestionsPanel';
-import { useChatStore, useReviewStore } from '@/store';
+import { useChatStore, useReviewStore, useMessageQueueStore, useUIStore } from '@/store';
 import { ContextUsageIndicator, ContextUsageInfo } from './ContextUsageIndicator';
 import { useSlashCommandSuggestions } from '@/hooks/useSlashCommandSuggestions';
 import { useEnhancePromptMutation } from '@/hooks/queries';
@@ -26,6 +26,7 @@ export interface InputProps {
   onAttach?: (files: File[]) => void;
   attachedFiles?: File[] | null;
   isLoading: boolean;
+  isStreaming?: boolean;
   onStopStream?: () => void;
   placeholder?: string;
   selectedModelId: string;
@@ -35,6 +36,7 @@ export interface InputProps {
   contextUsage?: ContextUsageInfo;
   showTip?: boolean;
   compact?: boolean;
+  chatId?: string;
 }
 
 export const Input = memo(function Input({
@@ -44,6 +46,7 @@ export const Input = memo(function Input({
   onAttach,
   attachedFiles,
   isLoading,
+  isStreaming = false,
   onStopStream,
   placeholder = 'Message Claudex...',
   selectedModelId,
@@ -53,6 +56,7 @@ export const Input = memo(function Input({
   contextUsage,
   showTip = true,
   compact = true,
+  chatId,
 }: InputProps) {
   const { fileStructure, customAgents, customSlashCommands, customPrompts } = useChatContext();
   const formRef = useRef<HTMLFormElement>(null);
@@ -63,6 +67,10 @@ export const Input = memo(function Input({
   const currentChat = useChatStore((state) => state.currentChat);
   const reviews = useReviewStore((state) => state.reviews);
   const removeReview = useReviewStore((state) => state.removeReview);
+  const queueMessage = useMessageQueueStore((state) => state.queueMessage);
+  const permissionMode = useUIStore((state) => state.permissionMode);
+  const thinkingMode = useUIStore((state) => state.thinkingMode);
+  const clearAttachedFiles = onAttach;
 
   const chatReviews = useMemo(
     () => (currentChat ? reviews.filter((r) => r.chatId === currentChat.id) : []),
@@ -188,6 +196,26 @@ export const Input = memo(function Input({
   );
 
   const submitOrStop = useCallback(() => {
+    if (isStreaming && !hasMessage) {
+      onStopStream?.();
+      return;
+    }
+
+    if (isStreaming && hasMessage && chatId) {
+      void queueMessage(
+        chatId,
+        message.trim(),
+        selectedModelId,
+        permissionMode,
+        thinkingMode,
+        attachedFiles ?? undefined,
+      );
+      setMessage('');
+      clearAttachedFiles?.([]);
+      setShowPreview(false);
+      return;
+    }
+
     if (isLoading) {
       onStopStream?.();
       return;
@@ -208,7 +236,22 @@ export const Input = memo(function Input({
       cancelable: true,
     }) as unknown as React.FormEvent;
     onSubmit(formEvent);
-  }, [hasMessage, isLoading, onStopStream, onSubmit]);
+  }, [
+    hasMessage,
+    isLoading,
+    isStreaming,
+    onStopStream,
+    onSubmit,
+    chatId,
+    message,
+    attachedFiles,
+    queueMessage,
+    setMessage,
+    clearAttachedFiles,
+    selectedModelId,
+    permissionMode,
+    thinkingMode,
+  ]);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<Element>) => {
@@ -310,7 +353,8 @@ export const Input = memo(function Input({
             <div className="absolute bottom-2.5 right-3">
               <SendButton
                 isLoading={isLoading}
-                disabled={(!isLoading && !hasMessage) || isEnhancing}
+                isStreaming={isStreaming}
+                disabled={(!isLoading && !isStreaming && !hasMessage) || isEnhancing}
                 onClick={handleSendClick}
                 type="button"
                 hasMessage={hasMessage}

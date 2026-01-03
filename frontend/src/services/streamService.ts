@@ -1,5 +1,5 @@
-import { useStreamStore } from '@/store';
-import type { ChatRequest, AssistantStreamEvent, ActiveStream } from '@/types';
+import { useStreamStore, useMessageQueueStore } from '@/store';
+import type { ChatRequest, AssistantStreamEvent, ActiveStream, QueueProcessingData } from '@/types';
 import { StreamProcessingError } from '@/types';
 import { chatService } from '@/services/chatService';
 import { logger } from '@/utils/logger';
@@ -11,6 +11,7 @@ export interface StreamOptions {
   onChunk?: (event: AssistantStreamEvent, messageId: string) => void;
   onComplete?: (messageId?: string) => void;
   onError?: (error: Error, messageId?: string) => void;
+  onQueueProcess?: (data: QueueProcessingData) => void;
 }
 
 interface StreamReconnectOptions {
@@ -19,18 +20,23 @@ interface StreamReconnectOptions {
   onChunk?: (event: AssistantStreamEvent, messageId: string) => void;
   onComplete?: (messageId?: string) => void;
   onError?: (error: Error, messageId?: string) => void;
+  onQueueProcess?: (data: QueueProcessingData) => void;
 }
 
 // Singleton service managing EventSource streams for chat completions.
 // Subscribes to Zustand store to always have latest state without hook limitations.
 class StreamService {
   private store = useStreamStore.getState();
+  private queueStore = useMessageQueueStore.getState();
 
   // Subscribe to store updates so this.store always reflects current state.
   // This pattern allows using Zustand outside of React components.
   constructor() {
     useStreamStore.subscribe((state) => {
       this.store = state;
+    });
+    useMessageQueueStore.subscribe((state) => {
+      this.queueStore = state;
     });
   }
 
@@ -59,7 +65,7 @@ class StreamService {
   private handleContentEvent(
     event: MessageEvent,
     streamId: string,
-    messageId: string,
+    _messageId: string,
     chatId: string,
   ): void {
     if (event.lastEventId) {
@@ -69,12 +75,12 @@ class StreamService {
     if (!event.data) return;
 
     const currentStream = this.store.getStream(streamId);
-    const callbacks = currentStream?.callbacks;
+    if (!currentStream) return;
 
     const parsed = this.parseStreamEvent<{ event?: AssistantStreamEvent }>(event.data);
 
-    if (parsed?.event && callbacks?.onChunk) {
-      callbacks.onChunk(parsed.event, messageId);
+    if (parsed?.event && currentStream.callbacks?.onChunk) {
+      currentStream.callbacks.onChunk(parsed.event, currentStream.messageId);
     }
   }
 
@@ -113,7 +119,7 @@ class StreamService {
   private handleCompleteEvent(
     event: MessageEvent,
     streamId: string,
-    messageId: string,
+    _messageId: string,
     chatId: string,
   ): void {
     if (event.lastEventId) {
@@ -124,7 +130,47 @@ class StreamService {
     if (!currentStream) return;
 
     this.store.removeStream(streamId);
-    currentStream.callbacks?.onComplete?.(messageId);
+    currentStream.callbacks?.onComplete?.(currentStream.messageId);
+  }
+
+  private handleQueueProcessingEvent(event: MessageEvent, chatId: string): void {
+    if (!event.data) return;
+
+    const parsed = this.parseStreamEvent<{
+      queued_message_id?: string;
+      user_message_id?: string;
+      assistant_message_id?: string;
+      content?: string;
+      model_id?: string;
+      attachments?: Array<{
+        id: string;
+        message_id: string;
+        file_url: string;
+        file_type: 'image' | 'pdf' | 'xlsx';
+        filename?: string;
+        created_at: string;
+      }>;
+    }>(event.data);
+
+    if (!parsed?.queued_message_id || !parsed?.assistant_message_id) return;
+
+    this.queueStore.removeLocalOnly(chatId, parsed.queued_message_id);
+
+    const stream = this.store.getStreamByChat(chatId);
+    if (!stream) return;
+
+    this.store.updateStreamMessageId(chatId, stream.messageId, parsed.assistant_message_id);
+
+    if (stream.callbacks?.onQueueProcess && parsed.user_message_id && parsed.content) {
+      stream.callbacks.onQueueProcess({
+        queuedMessageId: parsed.queued_message_id,
+        userMessageId: parsed.user_message_id,
+        assistantMessageId: parsed.assistant_message_id,
+        content: parsed.content,
+        modelId: parsed.model_id ?? '',
+        attachments: parsed.attachments,
+      });
+    }
   }
 
   private handleGenericError(event: Event | ErrorEvent, streamId: string, messageId: string): void {
@@ -168,6 +214,10 @@ class StreamService {
       this.handleCompleteEvent(event as MessageEvent, streamId, messageId, chatId),
     );
 
+    register('queue_processing', (event: Event) =>
+      this.handleQueueProcessingEvent(event as MessageEvent, chatId),
+    );
+
     source.onerror = (event) => {
       this.handleGenericError(event, streamId, messageId);
     };
@@ -191,6 +241,7 @@ class StreamService {
           onChunk: options.onChunk,
           onComplete: options.onComplete,
           onError: options.onError,
+          onQueueProcess: options.onQueueProcess,
         },
       };
 
@@ -263,6 +314,7 @@ class StreamService {
           onChunk: options.onChunk,
           onComplete: options.onComplete,
           onError: options.onError,
+          onQueueProcess: options.onQueueProcess,
         },
       };
 

@@ -83,6 +83,27 @@ def _build_file_response(
     )
 
 
+@router.get("/attachments/temp/preview")
+async def preview_temp_attachment(
+    path: str,
+    current_user: User = Depends(get_current_user),
+) -> FileResponse:
+    storage_base = Path(settings.STORAGE_PATH).resolve()
+    file_path = (storage_base / path).resolve()
+
+    if not str(file_path).startswith(str(storage_base)):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
+
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="File not found"
+        )
+
+    return _build_file_response(file_path, file_path.name, inline=True)
+
+
 @router.get("/attachments/{attachment_id}/preview")
 async def preview_attachment(
     attachment_id: UUID,

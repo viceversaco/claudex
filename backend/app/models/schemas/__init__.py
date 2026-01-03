@@ -75,6 +75,13 @@ from .agents import AgentDeleteResponse, AgentResponse, AgentUpdateRequest
 from .mcps import McpCreateRequest, McpDeleteResponse, McpResponse, McpUpdateRequest
 from .ai_model import AIModelResponse
 from .errors import HTTPErrorResponse
+from .queue import (
+    QueueAddResponse,
+    QueuedMessage,
+    QueueListResponse,
+    QueueMessageCreate,
+    QueueMessageUpdate,
+)
 
 __all__ = [
     # auth
@@ -164,4 +171,10 @@ __all__ = [
     "AIModelResponse",
     # errors
     "HTTPErrorResponse",
+    # queue
+    "QueueAddResponse",
+    "QueuedMessage",
+    "QueueListResponse",
+    "QueueMessageCreate",
+    "QueueMessageUpdate",
 ]

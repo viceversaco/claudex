@@ -75,7 +75,7 @@ class StorageService:
         if attachment_id:
             file_url = f"{settings.BASE_URL}/api/v1/attachments/{attachment_id}/preview"
         else:
-            file_url = f"{settings.BASE_URL}/api/v1/attachments/temp/preview"
+            file_url = f"{settings.BASE_URL}/api/v1/attachments/temp/preview?path={relative_file_path}"
 
         # Dual-write: file stored locally (for preview API) AND uploaded to sandbox (for AI access).
         # Sandbox upload failure is logged but not raised - local copy ensures preview still works.
