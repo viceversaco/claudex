@@ -84,7 +84,9 @@ class QueueService:
             "attachments": attachments,
         }
 
-        await self.redis.set(key, json.dumps(message_data), ex=QUEUE_MESSAGE_TTL_SECONDS)
+        await self.redis.set(
+            key, json.dumps(message_data), ex=QUEUE_MESSAGE_TTL_SECONDS
+        )
         return QueueUpsertResponse(
             id=message_id,
             created=True,

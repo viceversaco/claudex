@@ -120,8 +120,7 @@ class QueueInjector:
             return f"<user_prompt>{content}</user_prompt>"
 
         files_list = "\n".join(
-            f"- /home/user/{att['file_path'].split('/')[-1]}"
-            for att in attachments
+            f"- /home/user/{att['file_path'].split('/')[-1]}" for att in attachments
         )
         return (
             f"<user_attachments>\nUser uploaded the following files\n{files_list}\n</user_attachments>\n\n"
