@@ -7,11 +7,10 @@ from uuid import UUID, uuid4
 from redis.asyncio import Redis
 
 from app.constants import (
-    MAX_QUEUE_SIZE,
     QUEUE_MESSAGE_TTL_SECONDS,
     REDIS_KEY_CHAT_QUEUE,
 )
-from app.models.schemas.queue import QueuedMessage, QueueListResponse
+from app.models.schemas.queue import QueuedMessage, QueueUpsertResponse
 
 if TYPE_CHECKING:
     from app.models.db_models import Message
@@ -46,7 +45,7 @@ class QueueService:
     def _queue_key(self, chat_id: str) -> str:
         return REDIS_KEY_CHAT_QUEUE.format(chat_id=chat_id)
 
-    async def add_message(
+    async def upsert_message(
         self,
         chat_id: str,
         content: str,
@@ -54,12 +53,25 @@ class QueueService:
         permission_mode: str = "auto",
         thinking_mode: str | None = None,
         attachments: list[dict[str, Any]] | None = None,
-    ) -> tuple[UUID, int]:
+    ) -> QueueUpsertResponse:
         key = self._queue_key(chat_id)
-        current_len = await self.redis.llen(key)
+        raw = await self.redis.get(key)
 
-        if current_len >= MAX_QUEUE_SIZE:
-            raise ValueError(f"Queue is full (max {MAX_QUEUE_SIZE} messages)")
+        if raw:
+            data = json.loads(raw)
+            data["content"] = data["content"] + "\n" + content
+
+            if attachments:
+                existing_attachments = data.get("attachments") or []
+                data["attachments"] = existing_attachments + attachments
+
+            await self.redis.set(key, json.dumps(data), ex=QUEUE_MESSAGE_TTL_SECONDS)
+            return QueueUpsertResponse(
+                id=UUID(data["id"]),
+                created=False,
+                content=data["content"],
+                attachments=data.get("attachments"),
+            )
 
         message_id = uuid4()
         message_data: dict[str, Any] = {
@@ -72,106 +84,61 @@ class QueueService:
             "attachments": attachments,
         }
 
-        await self.redis.rpush(key, json.dumps(message_data))
-        await self.redis.expire(key, QUEUE_MESSAGE_TTL_SECONDS)
+        await self.redis.set(key, json.dumps(message_data), ex=QUEUE_MESSAGE_TTL_SECONDS)
+        return QueueUpsertResponse(
+            id=message_id,
+            created=True,
+            content=content,
+            attachments=attachments,
+        )
 
-        position = current_len
-        return message_id, position
-
-    async def get_queue(self, chat_id: str) -> QueueListResponse:
+    async def get_message(self, chat_id: str) -> QueuedMessage | None:
         key = self._queue_key(chat_id)
-        raw_items = await self.redis.lrange(key, 0, -1)
+        raw = await self.redis.get(key)
 
-        items: list[QueuedMessage] = []
-        for idx, raw in enumerate(raw_items):
-            data = json.loads(raw)
-            items.append(
-                QueuedMessage(
-                    id=UUID(data["id"]),
-                    content=data["content"],
-                    model_id=data["model_id"],
-                    permission_mode=data.get("permission_mode", "auto"),
-                    thinking_mode=data.get("thinking_mode"),
-                    position=idx,
-                    queued_at=datetime.fromisoformat(data["queued_at"]),
-                    attachments=data.get("attachments"),
-                )
-            )
+        if not raw:
+            return None
 
-        return QueueListResponse(items=items, count=len(items))
+        data = json.loads(raw)
+        return QueuedMessage(
+            id=UUID(data["id"]),
+            content=data["content"],
+            model_id=data["model_id"],
+            permission_mode=data.get("permission_mode", "auto"),
+            thinking_mode=data.get("thinking_mode"),
+            queued_at=datetime.fromisoformat(data["queued_at"]),
+            attachments=data.get("attachments"),
+        )
 
-    async def update_message(
-        self, chat_id: str, message_id: UUID, content: str
-    ) -> QueuedMessage | None:
+    async def update_message(self, chat_id: str, content: str) -> QueuedMessage | None:
         key = self._queue_key(chat_id)
-        raw_items = await self.redis.lrange(key, 0, -1)
+        raw = await self.redis.get(key)
 
-        for idx, raw in enumerate(raw_items):
-            data = json.loads(raw)
-            if data["id"] == str(message_id):
-                data["content"] = content
-                await self.redis.lset(key, idx, json.dumps(data))
-                return QueuedMessage(
-                    id=UUID(data["id"]),
-                    content=data["content"],
-                    model_id=data["model_id"],
-                    permission_mode=data.get("permission_mode", "auto"),
-                    thinking_mode=data.get("thinking_mode"),
-                    position=idx,
-                    queued_at=datetime.fromisoformat(data["queued_at"]),
-                    attachments=data.get("attachments"),
-                )
+        if not raw:
+            return None
 
-        return None
+        data = json.loads(raw)
+        data["content"] = content
+        await self.redis.set(key, json.dumps(data), ex=QUEUE_MESSAGE_TTL_SECONDS)
 
-    async def append_to_message(
-        self,
-        chat_id: str,
-        message_id: UUID,
-        content: str,
-        attachments: list[dict[str, Any]] | None = None,
-    ) -> QueuedMessage | None:
+        return QueuedMessage(
+            id=UUID(data["id"]),
+            content=data["content"],
+            model_id=data["model_id"],
+            permission_mode=data.get("permission_mode", "auto"),
+            thinking_mode=data.get("thinking_mode"),
+            queued_at=datetime.fromisoformat(data["queued_at"]),
+            attachments=data.get("attachments"),
+        )
+
+    async def clear_queue(self, chat_id: str) -> bool:
         key = self._queue_key(chat_id)
-        raw_items = await self.redis.lrange(key, 0, -1)
-
-        for idx, raw in enumerate(raw_items):
-            data = json.loads(raw)
-            if data["id"] == str(message_id):
-                data["content"] = data["content"] + "\n" + content
-
-                if attachments:
-                    existing_attachments = data.get("attachments") or []
-                    data["attachments"] = existing_attachments + attachments
-
-                await self.redis.lset(key, idx, json.dumps(data))
-                return QueuedMessage(
-                    id=UUID(data["id"]),
-                    content=data["content"],
-                    model_id=data["model_id"],
-                    permission_mode=data.get("permission_mode", "auto"),
-                    thinking_mode=data.get("thinking_mode"),
-                    position=idx,
-                    queued_at=datetime.fromisoformat(data["queued_at"]),
-                    attachments=data.get("attachments"),
-                )
-
-        return None
-
-    async def remove_message(self, chat_id: str, message_id: UUID) -> bool:
-        key = self._queue_key(chat_id)
-        raw_items = await self.redis.lrange(key, 0, -1)
-
-        for raw in raw_items:
-            data = json.loads(raw)
-            if data["id"] == str(message_id):
-                await self.redis.lrem(key, 1, raw)
-                return True
-
-        return False
+        deleted = await self.redis.delete(key)
+        return deleted > 0
 
     async def pop_next_message(self, chat_id: str) -> dict[str, Any] | None:
         key = self._queue_key(chat_id)
-        raw = await self.redis.lpop(key)
+        raw = await self.redis.getdel(key)
 
         if not raw:
             return None
@@ -180,5 +147,4 @@ class QueueService:
 
     async def has_messages(self, chat_id: str) -> bool:
         key = self._queue_key(chat_id)
-        length = await self.redis.llen(key)
-        return length > 0
+        return await self.redis.exists(key) > 0

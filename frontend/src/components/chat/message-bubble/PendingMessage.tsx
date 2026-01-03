@@ -7,8 +7,8 @@ import type { LocalQueuedMessage, MessageAttachment as QueueAttachment } from '@
 
 interface PendingMessageProps {
   message: LocalQueuedMessage;
-  onCancel: (id: string) => void;
-  onEdit: (id: string, newContent: string) => void;
+  onCancel: () => void;
+  onEdit: (newContent: string) => void;
 }
 
 function AuthenticatedPreview({ attachment }: { attachment: QueueAttachment }) {
@@ -132,12 +132,12 @@ export const PendingMessage = memo(function PendingMessage({
   const handleSaveEdit = useCallback(() => {
     const trimmed = editContent.trim();
     if (!trimmed) {
-      onCancel(message.id);
+      onCancel();
     } else {
-      onEdit(message.id, trimmed);
+      onEdit(trimmed);
     }
     setIsEditing(false);
-  }, [editContent, message.id, onCancel, onEdit]);
+  }, [editContent, onCancel, onEdit]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -180,7 +180,7 @@ export const PendingMessage = memo(function PendingMessage({
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
                 <Button
-                  onClick={() => onCancel(message.id)}
+                  onClick={onCancel}
                   variant="unstyled"
                   className="rounded-lg p-2 text-text-secondary hover:bg-error-100 hover:text-error-600 dark:text-text-dark-secondary dark:hover:bg-error-500/10 dark:hover:text-error-400"
                   aria-label="Cancel message"

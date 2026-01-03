@@ -101,7 +101,7 @@ export const Chat = memo(function Chat({
     chatId ? (state.queues.get(chatId) ?? EMPTY_QUEUE) : EMPTY_QUEUE,
   );
   const updateQueuedMessage = useMessageQueueStore((state) => state.updateQueuedMessage);
-  const removeQueuedMessage = useMessageQueueStore((state) => state.removeAndSync);
+  const clearAndSync = useMessageQueueStore((state) => state.clearAndSync);
   const fetchQueue = useMessageQueueStore((state) => state.fetchQueue);
 
   useEffect(() => {
@@ -110,19 +110,16 @@ export const Chat = memo(function Chat({
     }
   }, [chatId, fetchQueue]);
 
-  const handleCancelPending = useCallback(
-    (messageId: string) => {
-      if (chatId) {
-        removeQueuedMessage(chatId, messageId);
-      }
-    },
-    [chatId, removeQueuedMessage],
-  );
+  const handleCancelPending = useCallback(() => {
+    if (chatId) {
+      clearAndSync(chatId);
+    }
+  }, [chatId, clearAndSync]);
 
   const handleEditPending = useCallback(
-    (messageId: string, newContent: string) => {
+    (newContent: string) => {
       if (chatId) {
-        updateQueuedMessage(chatId, messageId, newContent);
+        updateQueuedMessage(chatId, newContent);
       }
     },
     [chatId, updateQueuedMessage],

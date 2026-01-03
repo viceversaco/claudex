@@ -18,17 +18,12 @@ class QueueMessageUpdate(BaseModel):
 
 class QueuedMessage(QueuedMessageBase):
     id: UUID
-    position: int
     queued_at: datetime
     attachments: list[dict[str, Any]] | None = None
 
 
-class QueueListResponse(BaseModel):
-    items: list[QueuedMessage]
-    count: int
-
-
-class QueueAddResponse(BaseModel):
+class QueueUpsertResponse(BaseModel):
     id: UUID
-    position: int
+    created: bool
+    content: str
     attachments: list[dict[str, Any]] | None = None

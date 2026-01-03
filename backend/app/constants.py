@@ -18,10 +18,6 @@ REDIS_KEY_CHAT_QUEUE: Final[str] = "chat:{chat_id}:queue"
 
 QUEUE_MESSAGE_TTL_SECONDS: Final[int] = 3600
 
-# Maximum number of messages that can be queued per chat.
-# Note: Frontend has matching constant in messageQueueStore.ts - keep in sync.
-MAX_QUEUE_SIZE: Final[int] = 10
-
 SANDBOX_AUTO_PAUSE_TIMEOUT: Final[int] = 3000
 SANDBOX_DEFAULT_COMMAND_TIMEOUT: Final[int] = 120
 MAX_CHECKPOINTS_PER_SANDBOX: Final[int] = 20

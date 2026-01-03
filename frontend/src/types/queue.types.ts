@@ -9,19 +9,14 @@ export interface QueuedMessage {
   id: string;
   content: string;
   model_id: string;
-  position: number;
   queued_at: string;
   attachments?: MessageAttachment[];
 }
 
-export interface QueueListResponse {
-  items: QueuedMessage[];
-  count: number;
-}
-
-export interface QueueAddResponse {
+export interface QueueUpsertResponse {
   id: string;
-  position: number;
+  created: boolean;
+  content: string;
   attachments?: MessageAttachment[];
 }
 
