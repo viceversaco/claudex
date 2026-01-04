@@ -107,7 +107,9 @@ export const Message = memo(function Message({
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="flex-shrink-0">{isBot ? <BotAvatar /> : <UserAvatar />}</div>
           <div className="flex flex-wrap items-center gap-2 text-xs sm:gap-3">
-            <span className="font-medium text-text-secondary dark:text-text-dark-tertiary">
+            <span
+              className={`${isBot ? 'font-medium text-text-secondary dark:text-text-dark-tertiary' : 'font-bold text-text-secondary dark:text-text-dark-tertiary'}`}
+            >
               {isBot ? 'Claudex' : 'You'}
             </span>
             {formattedDate && (
@@ -132,7 +134,7 @@ export const Message = memo(function Message({
             className={`prose prose-sm max-w-none break-words ${
               isBot
                 ? 'text-text-primary dark:text-text-dark-primary'
-                : 'text-text-primary dark:text-text-dark-secondary'
+                : 'font-semibold text-text-primary dark:text-text-dark-secondary'
             }`}
           >
             <MessageContent
@@ -146,11 +148,11 @@ export const Message = memo(function Message({
 
           {isBot && content.trim() && !isThisMessageStreaming && (
             <div className="pt-2">
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-2 flex items-center gap-2">
                 <Button
                   onClick={() => onCopy(content, id)}
                   variant="unstyled"
-                  className={`relative min-h-[44px] min-w-[44px] overflow-hidden rounded-xl p-2.5 transition-all duration-200 sm:min-h-0 sm:min-w-0 sm:p-2 ${
+                  className={`relative overflow-hidden rounded-xl px-1.5 py-0.5 transition-all duration-200 sm:px-1.5 sm:py-0.5 ${
                     copiedMessageId === id
                       ? 'bg-success-100 text-success-600 dark:bg-success-500/10 dark:text-success-400'
                       : 'text-text-secondary opacity-70 hover:bg-surface-secondary hover:text-text-primary hover:opacity-100 dark:text-text-dark-secondary dark:hover:bg-surface-dark-hover dark:hover:text-text-dark-primary'
@@ -177,7 +179,7 @@ export const Message = memo(function Message({
                       onClick={handleRestore}
                       disabled={isRestoring || isGloballyStreaming}
                       variant="unstyled"
-                      className={`relative rounded-xl p-2.5 transition-all duration-200 sm:p-2 ${
+                      className={`relative rounded-xl px-1.5 py-0.5 transition-all duration-200 sm:px-1.5 sm:py-0.5 ${
                         isRestoring || isGloballyStreaming
                           ? 'cursor-not-allowed opacity-50'
                           : 'text-text-secondary opacity-70 hover:bg-surface-secondary hover:text-text-primary hover:opacity-100 dark:text-text-dark-secondary dark:hover:bg-surface-dark-hover dark:hover:text-text-dark-primary'
@@ -204,7 +206,7 @@ export const Message = memo(function Message({
                         onClick={handleFork}
                         disabled={isForking || isGloballyStreaming}
                         variant="unstyled"
-                        className={`relative rounded-xl p-2.5 transition-all duration-200 sm:p-2 ${
+                        className={`relative rounded-xl px-1.5 py-0.5 transition-all duration-200 sm:px-1.5 sm:py-0.5 ${
                           isForking || isGloballyStreaming
                             ? 'cursor-not-allowed opacity-50'
                             : 'text-text-secondary opacity-70 hover:bg-surface-secondary hover:text-text-primary hover:opacity-100 dark:text-text-dark-secondary dark:hover:bg-surface-dark-hover dark:hover:text-text-dark-primary'

@@ -50,11 +50,14 @@ export const UserAvatar = () => {
   const displayName = user?.username || user?.email || 'User';
 
   return (
-    <AvatarWrapper>
-      <div className="flex h-4 w-4 items-center justify-center text-xs font-semibold text-text-secondary dark:text-text-dark-secondary">
-        {displayName?.[0]?.toUpperCase() || <User className="h-4 w-4" />}
+    <div className="group relative">
+      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-brand-500/20 to-brand-600/20 opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-100 dark:from-brand-400/20 dark:to-brand-500/20" />
+      <div className="relative flex items-center justify-center rounded-full border-2 border-blue-500/30 bg-surface p-2 shadow-sm backdrop-blur-sm transition-all duration-200 group-hover:border-blue-500/50 dark:border-blue-400/30 dark:bg-surface-dark dark:group-hover:border-blue-400/50 sm:p-2.5">
+        <div className="flex h-4 w-4 items-center justify-center text-xs font-semibold text-text-secondary dark:text-text-dark-secondary">
+          {displayName?.[0]?.toUpperCase() || <User className="h-4 w-4" />}
+        </div>
       </div>
-    </AvatarWrapper>
+    </div>
   );
 };
 

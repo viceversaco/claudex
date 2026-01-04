@@ -4,7 +4,7 @@ import iconLight from '/assets/images/icon-white.svg';
 
 export const LoadingIndicator = memo(function LoadingIndicator() {
   return (
-    <div className="flex items-center justify-center gap-3 py-3">
+    <div className="flex items-center justify-center gap-3 pb-2 pt-4">
       <div className="relative">
         <img
           src={iconDark}
