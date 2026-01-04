@@ -30,19 +30,19 @@ class QueueInjector:
         self.session_factory = session_factory
         self.session_id = session_id
 
-    async def check_and_inject(self) -> bool:
+    async def check_and_inject(self) -> str | None:
         async with redis_connection() as redis:
             queue_service = QueueService(redis)
             if not await queue_service.has_messages(self.chat_id):
-                return False
+                return None
 
             queued_msg = await queue_service.pop_next_message(self.chat_id)
             if not queued_msg:
-                return False
+                return None
 
         messages = await self._create_queue_messages(queued_msg)
         if not messages:
-            return False
+            return None
 
         user_message, assistant_message = messages
 
@@ -51,7 +51,7 @@ class QueueInjector:
         injection_msg = self._build_injection_message(queued_msg, self.session_id)
 
         await self.transport.write(json.dumps(injection_msg) + "\n")
-        return True
+        return str(assistant_message.id)
 
     async def _create_queue_messages(
         self,

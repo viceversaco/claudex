@@ -142,7 +142,19 @@ class StreamOrchestrator:
 
                     if queue_injector:
                         try:
-                            await queue_injector.check_and_inject()
+                            new_assistant_id = await queue_injector.check_and_inject()
+                            if new_assistant_id:
+                                if ctx.assistant_message_id and ctx.events:
+                                    await self._save_message_content(
+                                        ctx.assistant_message_id,
+                                        ctx.events,
+                                        ctx.ai_service.get_total_cost_usd(),
+                                        MessageStreamStatus.COMPLETED,
+                                        ctx.session_factory,
+                                    )
+                                await self.publisher.clear_stream()
+                                ctx.assistant_message_id = new_assistant_id
+                                ctx.events.clear()
                         except Exception as e:
                             logger.warning("Queue injection failed: %s", e)
 

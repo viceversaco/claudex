@@ -107,6 +107,14 @@ class StreamPublisher:
             payload["injected_inline"] = True
         await self.publish(event_type, payload)
 
+    async def clear_stream(self) -> None:
+        if not self._redis:
+            return
+        try:
+            await self._redis.delete(REDIS_KEY_CHAT_STREAM.format(chat_id=self.chat_id))
+        except Exception as exc:
+            logger.warning("Failed to clear stream for chat %s: %s", self.chat_id, exc)
+
     async def cleanup(self) -> None:
         if not self._redis:
             return
