@@ -61,6 +61,27 @@ Switch between providers in the same chat:
 ### Scheduled Tasks
 Automate recurring tasks with Celery workers.
 
+### Chat Features
+- Fork chats from any message point
+- Restore to any previous message in history
+- File attachments with preview
+
+### Preview Capabilities
+- Web preview for running applications
+- Mobile viewport simulation
+- File previews: Markdown, HTML, images, CSV, PDF, PowerPoint
+
+### Marketplace
+- Browse and install plugins from official catalog
+- One-click installation of agents, skills, commands, MCPs
+
+### Secrets Management
+- Environment variables for sandbox execution
+
+### Custom Instructions
+- System prompts for global context
+- Custom instructions injected with each message
+
 ## Configuration
 
 Configure in the Settings UI after login:
