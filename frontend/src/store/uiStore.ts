@@ -44,13 +44,13 @@ export const useUIStore = create<UIStoreState>()(
         permissionMode: state.permissionMode,
         thinkingMode: state.thinkingMode,
         currentView: state.currentView,
+        sidebarOpen: state.sidebarOpen,
       }),
       merge: (persisted, current) => {
         const persistedState = persisted as Partial<UIStoreState> | undefined;
         return {
           ...current,
           ...persistedState,
-          sidebarOpen: getInitialSidebarState(),
         };
       },
     },
