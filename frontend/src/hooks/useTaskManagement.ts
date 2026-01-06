@@ -3,7 +3,7 @@ import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import type { RecurrenceType, ScheduledTask } from '@/types';
 import { useCreateScheduledTaskMutation, useUpdateScheduledTaskMutation } from '@/hooks/queries';
-import { localTimeInputToUtc, utcTimeToLocalInput } from '@/utils/timezone';
+import { localTimeInputToUtc, utcTimeToLocalInput } from '@/utils/date';
 
 interface TaskFormType {
   task_name: string;

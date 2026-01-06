@@ -23,7 +23,7 @@ import {
 import { MAX_TASKS_LIMIT } from '@/config/constants';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
-import { formatLocalTimeFromUtc } from '@/utils/timezone';
+import { formatLocalTimeFromUtc } from '@/utils/date';
 
 interface TasksSettingsTabProps {
   onAddTask: () => void;

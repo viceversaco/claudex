@@ -5,7 +5,8 @@ import { MessageContent } from './MessageContent';
 import { UserAvatar, BotAvatar } from './MessageAvatars';
 import { useModelsQuery, useForkChatMutation, useRestoreCheckpointMutation } from '@/hooks/queries';
 import type { MessageAttachment } from '@/types';
-import { ConfirmDialog, LoadingOverlay, Button, Spinner, Badge } from '@/components/ui';
+import { ConfirmDialog, LoadingOverlay, Button, Spinner, Badge, Tooltip } from '@/components/ui';
+import { formatRelativeTime, formatFullTimestamp } from '@/utils/date';
 import toast from 'react-hot-toast';
 import { useChatContext } from '@/hooks/useChatContext';
 import { SandboxProvider } from '@/config/constants';
@@ -90,8 +91,10 @@ export const Message = memo(function Message({
     forkMutation.mutate({ chatId, messageId: id });
   }, [chatId, id, isForking, forkMutation]);
 
-  const formattedDate = useMemo(
-    () => (createdAt ? new Date(createdAt).toLocaleString() : ''),
+  const relativeTime = useMemo(() => (createdAt ? formatRelativeTime(createdAt) : ''), [createdAt]);
+
+  const fullTimestamp = useMemo(
+    () => (createdAt ? formatFullTimestamp(createdAt) : ''),
     [createdAt],
   );
 
@@ -112,12 +115,14 @@ export const Message = memo(function Message({
             >
               {isBot ? 'Claudex' : 'You'}
             </span>
-            {formattedDate && (
+            {relativeTime && (
               <>
                 <span className="text-text-quaternary dark:text-text-dark-quaternary">•</span>
-                <span className="text-text-tertiary dark:text-text-dark-tertiary">
-                  {formattedDate}
-                </span>
+                <Tooltip content={fullTimestamp} position="bottom">
+                  <span className="cursor-default text-text-tertiary dark:text-text-dark-tertiary">
+                    {relativeTime}
+                  </span>
+                </Tooltip>
               </>
             )}
             {isBot && modelId && (

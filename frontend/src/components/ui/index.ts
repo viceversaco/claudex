@@ -26,3 +26,4 @@ export { ViewSwitcher } from './ViewSwitcher';
 export { TimePicker } from './TimePicker';
 export { ErrorBoundary } from './ErrorBoundary';
 export { SettingsUploadModal } from './SettingsUploadModal';
+export { Tooltip } from './Tooltip';
