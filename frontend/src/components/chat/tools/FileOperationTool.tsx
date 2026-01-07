@@ -1,12 +1,21 @@
-import { memo } from 'react';
+import { memo, useState, useCallback } from 'react';
 import { FileSearch, FileEdit as FileEditIcon, FilePlus } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ToolAggregate, ToolComponent } from '@/types';
-import { ToolCard, DiffViewer } from './common';
+import { ToolCard, DiffViewer, ReviewInput } from './common';
+import { useReviewStore } from '@/store/reviewStore';
 
 interface FileOperationToolProps {
   tool: ToolAggregate;
   variant: 'read' | 'edit' | 'write';
+  chatId?: string;
+}
+
+interface PendingReview {
+  lineStart: number;
+  lineEnd: number;
+  selectedCode: string;
+  changeType: 'insert' | 'delete' | 'normal';
 }
 
 interface TitleConfig {
@@ -46,10 +55,53 @@ const normalizeContent = (result: unknown): string => {
   return JSON.stringify(result, null, 2);
 };
 
-const FileOperationToolInner: React.FC<FileOperationToolProps> = ({ tool, variant }) => {
+const FileOperationToolInner: React.FC<FileOperationToolProps> = ({ tool, variant, chatId }) => {
   const config = OPERATION_CONFIGS[variant];
   const Icon = config.icon;
   const filePath = (tool.input?.file_path as string | undefined) ?? '';
+
+  const [selectedRange, setSelectedRange] = useState<{ start: number; end: number } | null>(null);
+  const [pendingReview, setPendingReview] = useState<PendingReview | null>(null);
+  const addReview = useReviewStore((s) => s.addReview);
+
+  const handleLineSelect = useCallback(
+    (
+      lineStart: number,
+      lineEnd: number,
+      selectedCode: string,
+      changeType: 'insert' | 'delete' | 'normal',
+    ) => {
+      setSelectedRange({ start: lineStart, end: lineEnd });
+      setPendingReview({ lineStart, lineEnd, selectedCode, changeType });
+    },
+    [],
+  );
+
+  const handleReviewSubmit = useCallback(
+    (comment: string) => {
+      if (!pendingReview || !chatId) return;
+      addReview({
+        id: crypto.randomUUID(),
+        chatId,
+        filePath,
+        operationId: tool.id,
+        lineStart: pendingReview.lineStart,
+        lineEnd: pendingReview.lineEnd,
+        selectedCode: pendingReview.selectedCode,
+        changeType: pendingReview.changeType,
+        comment,
+        createdAt: new Date().toISOString(),
+      });
+      setSelectedRange(null);
+      setPendingReview(null);
+    },
+    [pendingReview, chatId, filePath, tool.id, addReview],
+  );
+
+  const handleReviewCancel = useCallback(() => {
+    setSelectedRange(null);
+    setPendingReview(null);
+  }, []);
 
   const renderContent = () => {
     if (variant === 'read') {
@@ -88,18 +140,51 @@ const FileOperationToolInner: React.FC<FileOperationToolProps> = ({ tool, varian
 
       return (
         <div className="border-t border-border/50 p-3 dark:border-border-dark/50">
-          <DiffViewer oldContent={oldString} newContent={newString} filename={filePath} />
+          <DiffViewer
+            oldContent={oldString}
+            newContent={newString}
+            filename={filePath}
+            reviewMode={!!chatId}
+            operationId={tool.id}
+            onLineSelect={handleLineSelect}
+            selectedRange={selectedRange}
+          />
+          {pendingReview && (
+            <ReviewInput
+              selectedLines={{ start: pendingReview.lineStart, end: pendingReview.lineEnd }}
+              fileName={filePath}
+              onSubmit={handleReviewSubmit}
+              onCancel={handleReviewCancel}
+              className="mt-3"
+            />
+          )}
         </div>
       );
     }
 
-    // variant === 'write'
     const content = typeof tool.input?.content === 'string' ? tool.input.content : '';
     if (!content) return null;
 
     return (
       <div className="border-t border-border/50 p-3 dark:border-border-dark/50">
-        <DiffViewer oldContent="" newContent={content} filename={filePath} />
+        <DiffViewer
+          oldContent=""
+          newContent={content}
+          filename={filePath}
+          reviewMode={!!chatId}
+          operationId={tool.id}
+          onLineSelect={handleLineSelect}
+          selectedRange={selectedRange}
+        />
+        {pendingReview && (
+          <ReviewInput
+            selectedLines={{ start: pendingReview.lineStart, end: pendingReview.lineEnd }}
+            fileName={filePath}
+            onSubmit={handleReviewSubmit}
+            onCancel={handleReviewCancel}
+            className="mt-3"
+          />
+        )}
       </div>
     );
   };
@@ -135,14 +220,14 @@ const FileOperationToolInner: React.FC<FileOperationToolProps> = ({ tool, varian
 
 const FileOperationTool = memo(FileOperationToolInner);
 
-export const WriteTool: ToolComponent = ({ tool }) => (
-  <FileOperationTool tool={tool} variant="write" />
+export const WriteTool: ToolComponent = ({ tool, chatId }) => (
+  <FileOperationTool tool={tool} variant="write" chatId={chatId} />
 );
 
-export const ReadTool: ToolComponent = ({ tool }) => (
-  <FileOperationTool tool={tool} variant="read" />
+export const ReadTool: ToolComponent = ({ tool, chatId }) => (
+  <FileOperationTool tool={tool} variant="read" chatId={chatId} />
 );
 
-export const EditTool: ToolComponent = ({ tool }) => (
-  <FileOperationTool tool={tool} variant="edit" />
+export const EditTool: ToolComponent = ({ tool, chatId }) => (
+  <FileOperationTool tool={tool} variant="edit" chatId={chatId} />
 );
