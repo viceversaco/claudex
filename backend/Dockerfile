@@ -19,7 +19,7 @@ RUN apt-get update && \
 RUN npm install -g @anthropic-ai/claude-code@2.1.11
 
 # Install uv package manager
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+RUN curl -LsSf https://astral.sh/uv/install.sh | bash
 
 COPY requirements.txt .
 
