@@ -8,6 +8,7 @@ from typing import Any, Callable
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.session import get_celery_session
 from app.models.db_models import (
     ScheduledTask,
     TaskExecution,
@@ -108,46 +109,46 @@ async def update_task_after_execution(
 
 
 async def check_due_tasks(
-    session_factory: Any,
     execute_task_trigger: Callable[[str], Any],
 ) -> dict[str, Any]:
-    try:
-        async with session_factory() as db:
-            now = datetime.now(timezone.utc)
+    async with get_celery_session() as (session_factory, _):
+        try:
+            async with session_factory() as db:
+                now = datetime.now(timezone.utc)
 
-            query = (
-                select(ScheduledTask)
-                .where(
-                    ScheduledTask.enabled,
-                    ScheduledTask.status == TaskStatus.ACTIVE,
-                    ScheduledTask.next_execution <= now,
-                    ScheduledTask.next_execution.isnot(None),
+                query = (
+                    select(ScheduledTask)
+                    .where(
+                        ScheduledTask.enabled,
+                        ScheduledTask.status == TaskStatus.ACTIVE,
+                        ScheduledTask.next_execution <= now,
+                        ScheduledTask.next_execution.isnot(None),
+                    )
+                    .order_by(ScheduledTask.next_execution)
+                    .limit(100)
                 )
-                .order_by(ScheduledTask.next_execution)
-                .limit(100)
-            )
 
-            result = await db.execute(query)
-            tasks = result.scalars().all()
+                result = await db.execute(query)
+                tasks = result.scalars().all()
 
-            for task in tasks:
-                next_exec = calculate_next_execution(task, from_time=now)
+                for task in tasks:
+                    next_exec = calculate_next_execution(task, from_time=now)
 
-                if next_exec is None:
-                    task.next_execution = None
-                    task.status = TaskStatus.PENDING
-                else:
-                    task.next_execution = next_exec
+                    if next_exec is None:
+                        task.next_execution = None
+                        task.status = TaskStatus.PENDING
+                    else:
+                        task.next_execution = next_exec
 
-                db.add(task)
+                    db.add(task)
 
-            await db.commit()
+                await db.commit()
 
-            for task in tasks:
-                execute_task_trigger(str(task.id))
+                for task in tasks:
+                    execute_task_trigger(str(task.id))
 
-            return {"tasks_triggered": len(tasks)}
+                return {"tasks_triggered": len(tasks)}
 
-    except Exception as e:
-        logger.error("Error checking scheduled tasks: %s", e)
-        return {"error": str(e)}
+        except Exception as e:
+            logger.error("Error checking scheduled tasks: %s", e)
+            return {"error": str(e)}

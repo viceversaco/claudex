@@ -26,7 +26,6 @@ from app.services.transports import (
     E2BSandboxTransport,
     ModalSandboxTransport,
 )
-from app.utils.validators import APIKeyValidationError, validate_e2b_api_key
 from app.services.streaming.events import StreamEvent
 from app.services.streaming.processor import StreamProcessor
 from app.services.tool_handler import ToolHandlerRegistry
@@ -125,10 +124,9 @@ class ClaudeAgentService:
         sandbox_id: str,
         prompt_iterable: AsyncIterator[dict[str, Any]],
         options: ClaudeAgentOptions,
-        user_settings: UserSettings | None = None,
-        e2b_api_key: str | None = None,
+        user_settings: UserSettings,
     ) -> E2BSandboxTransport | DockerSandboxTransport | ModalSandboxTransport:
-        if sandbox_provider == SandboxProviderType.DOCKER or sandbox_provider is None:
+        if sandbox_provider == SandboxProviderType.DOCKER or not sandbox_provider:
             docker_config = create_docker_config()
             return DockerSandboxTransport(
                 sandbox_id=sandbox_id,
@@ -138,36 +136,26 @@ class ClaudeAgentService:
             )
 
         if sandbox_provider == SandboxProviderType.MODAL.value:
-            modal_api_key = None
-            if user_settings is not None:
-                modal_api_key = user_settings.modal_api_key
-
-            if modal_api_key is None:
+            if not user_settings.modal_api_key:
                 raise ClaudeAgentException(
                     "Modal API key is required for Modal sandbox provider"
                 )
 
             return ModalSandboxTransport(
                 sandbox_id=sandbox_id,
-                api_key=modal_api_key,
+                api_key=user_settings.modal_api_key,
                 prompt=prompt_iterable,
                 options=options,
             )
 
-        if e2b_api_key is None and user_settings is not None:
-            try:
-                e2b_api_key = validate_e2b_api_key(user_settings)
-            except APIKeyValidationError as e:
-                raise ClaudeAgentException(str(e)) from e
-
-        if e2b_api_key is None:
+        if not user_settings.e2b_api_key:
             raise ClaudeAgentException(
                 "E2B API key is required for E2B sandbox provider"
             )
 
         return E2BSandboxTransport(
             sandbox_id=sandbox_id,
-            api_key=e2b_api_key,
+            api_key=user_settings.e2b_api_key,
             prompt=prompt_iterable,
             options=options,
         )
@@ -405,7 +393,7 @@ class ClaudeAgentService:
             session_factory=self.session_factory
         ).get_user_settings(user.id)
 
-        sandbox_provider = user_settings.sandbox_provider or "docker"
+        sandbox_provider = user_settings.sandbox_provider
         servers = {
             "permission": self._build_permission_server(
                 permission_mode, chat_id, sandbox_provider
@@ -615,7 +603,6 @@ class ClaudeAgentService:
                 prompt_iterable=prompt_iterable,
                 options=options,
                 user_settings=user_settings,
-                e2b_api_key=user_settings.e2b_api_key,
             )
 
             async with transport:

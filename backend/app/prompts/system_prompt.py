@@ -126,23 +126,19 @@ def build_custom_system_prompt(
 
 def build_system_prompt_for_chat(
     sandbox_id: str,
-    user_settings: "UserSettings | None",
+    user_settings: "UserSettings",
     selected_prompt_name: str | None = None,
 ) -> str:
-    github_token_configured = bool(
-        user_settings and user_settings.github_personal_access_token
-    )
+    github_token_configured = bool(user_settings.github_personal_access_token)
     env_vars_formatted = None
-    if user_settings and user_settings.custom_env_vars:
+    if user_settings.custom_env_vars:
         env_vars_formatted = "\n".join(
             f"- {env_var['key']}" for env_var in user_settings.custom_env_vars
         )
 
-    sandbox_provider = (
-        user_settings.sandbox_provider if user_settings else None
-    ) or "docker"
+    sandbox_provider = user_settings.sandbox_provider
 
-    if selected_prompt_name and user_settings and user_settings.custom_prompts:
+    if selected_prompt_name and user_settings.custom_prompts:
         custom_prompt = next(
             (
                 p

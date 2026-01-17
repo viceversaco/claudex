@@ -164,12 +164,12 @@ def validate_recurrence_constraints(
     recurrence_type: RecurrenceType, scheduled_day: int | None
 ) -> None:
     if recurrence_type == RecurrenceType.WEEKLY:
-        if scheduled_day is None or not (0 <= scheduled_day <= 6):
+        if scheduled_day is None or not 0 <= scheduled_day <= 6:
             raise SchedulerException(
                 "Weekly tasks require scheduled_day between 0 (Monday) and 6 (Sunday)"
             )
     elif recurrence_type == RecurrenceType.MONTHLY:
-        if scheduled_day is None or not (1 <= scheduled_day <= 31):
+        if scheduled_day is None or not 1 <= scheduled_day <= 31:
             raise SchedulerException(
                 "Monthly tasks require scheduled_day between 1 and 31"
             )

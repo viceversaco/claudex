@@ -541,7 +541,7 @@ class ChatService(BaseDbService[Chat]):
             UserSettings, await self.user_service.get_user_settings(user.id)
         )
 
-        sandbox_provider = user_settings.sandbox_provider or "docker"
+        sandbox_provider = user_settings.sandbox_provider
         if sandbox_provider != "docker":
             raise ChatException(
                 "Fork is only supported with Docker sandbox provider",

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from app.models.db_models.enums import ModelProvider
 from app.models.types import JSONList
@@ -13,14 +13,6 @@ if TYPE_CHECKING:
 
 class APIKeyValidationError(ValueError):
     pass
-
-
-def validate_e2b_api_key(user_settings: UserSettings) -> str:
-    if not user_settings.e2b_api_key:
-        raise APIKeyValidationError(
-            "E2B API key is required. Please configure your E2B API key in Settings."
-        )
-    return cast(str, user_settings.e2b_api_key)
 
 
 def normalize_json_list(value: JSONList | None) -> JSONList:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -18,11 +18,16 @@ from app.models.db_models import (
     TaskExecution,
     TaskExecutionStatus,
     User,
+    UserSettings,
 )
 from app.services.scheduler.execution import update_task_after_execution
-
-if TYPE_CHECKING:
-    from app.services.sandbox import SandboxService
+from app.services.user import UserService
+from app.services.sandbox import SandboxService
+from app.services.sandbox_providers import (
+    SandboxProviderType,
+    create_sandbox_provider,
+)
+from app.utils.validators import APIKeyValidationError, validate_model_api_keys
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -75,9 +80,6 @@ async def validate_user_api_keys(
     model_id: str,
     session_factory: Any,
 ) -> tuple[Any, dict[str, Any] | None]:
-    from app.services.user import UserService
-    from app.utils.validators import APIKeyValidationError, validate_model_api_keys
-
     user_service = UserService()
 
     try:
@@ -102,16 +104,10 @@ async def validate_user_api_keys(
 
 
 async def create_and_initialize_sandbox(
-    user_settings: Any,
+    user_settings: UserSettings,
     user: User,
     session_factory: Any,
 ) -> tuple[SandboxService, str]:
-    from app.services.sandbox import SandboxService
-    from app.services.sandbox_providers import (
-        SandboxProviderType,
-        create_sandbox_provider,
-    )
-
     api_key = None
     if user_settings.sandbox_provider == SandboxProviderType.E2B.value:
         api_key = user_settings.e2b_api_key

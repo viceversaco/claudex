@@ -12,8 +12,8 @@ from app.services.scheduler.recurrence import (
     validate_recurrence_constraints,
 )
 from app.services.scheduler.runner import (
-    cleanup_expired_tokens_async,
-    execute_scheduled_task_async,
+    cleanup_expired_tokens,
+    run_scheduled_task,
 )
 from app.services.scheduler.service import MAX_TASKS_PER_USER, SchedulerService
 
@@ -25,9 +25,9 @@ __all__ = [
     "calculate_next_execution",
     "check_due_tasks",
     "check_duplicate_execution",
-    "cleanup_expired_tokens_async",
+    "cleanup_expired_tokens",
     "complete_task_execution",
-    "execute_scheduled_task_async",
+    "run_scheduled_task",
     "load_task_and_user",
     "update_task_after_execution",
     "validate_recurrence_constraints",
