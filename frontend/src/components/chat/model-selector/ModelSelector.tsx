@@ -61,11 +61,21 @@ export const ModelSelector = memo(function ModelSelector({
     }
   }, [models, selectedModel, onModelChange]);
 
-  if (isLoading || models.length === 0) {
+  if (isLoading) {
     return (
       <div className="flex items-center gap-1 rounded-lg border border-border/70 bg-surface-tertiary px-2 py-1 shadow-sm dark:border-white/10 dark:bg-surface-dark-tertiary">
         <Bot className="h-3.5 w-3.5 text-text-quaternary" />
         <div className="hidden h-3.5 w-16 animate-pulse rounded bg-text-quaternary/20 sm:block" />
+        <ChevronDown className="hidden h-3.5 w-3.5 text-text-quaternary sm:block" />
+      </div>
+    );
+  }
+
+  if (models.length === 0) {
+    return (
+      <div className="flex items-center gap-1 rounded-lg border border-border/70 bg-surface-tertiary px-2 py-1 shadow-sm dark:border-white/10 dark:bg-surface-dark-tertiary">
+        <Bot className="h-3.5 w-3.5 text-text-quaternary" />
+        <span className="hidden text-xs text-text-quaternary sm:block">No models</span>
         <ChevronDown className="hidden h-3.5 w-3.5 text-text-quaternary sm:block" />
       </div>
     );
@@ -76,10 +86,10 @@ export const ModelSelector = memo(function ModelSelector({
       value={selectedModel || models[0]}
       items={groupedItems}
       getItemKey={(model) => model.model_id}
-      getItemLabel={(model) => model.name}
+      getItemLabel={(model) => `${model.provider_name} - ${model.name}`}
       onSelect={(model) => onModelChange(model.model_id)}
       leftIcon={Bot}
-      width="w-48"
+      width="w-64"
       dropdownPosition={dropdownPosition}
       disabled={disabled}
       compactOnMobile
@@ -89,7 +99,7 @@ export const ModelSelector = memo(function ModelSelector({
         <span
           className={`truncate text-xs font-medium text-text-primary ${isSelected ? 'dark:text-text-dark-primary' : 'dark:text-text-dark-secondary'}`}
         >
-          {model.name}
+          {model.provider_name} - {model.name}
         </span>
       )}
     />

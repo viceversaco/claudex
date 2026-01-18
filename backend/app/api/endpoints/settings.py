@@ -9,7 +9,7 @@ from app.core.security import get_current_user
 from app.models.db_models import User
 from app.models.schemas import UserSettingsBase, UserSettingsResponse
 from app.services.exceptions import UserException
-from app.services.user import UserService
+from app.services.user import DuplicateProviderNameError, UserService
 from app.utils.redis import redis_connection
 
 logger = logging.getLogger(__name__)
@@ -55,6 +55,11 @@ async def update_user_settings(
             await user_service.invalidate_settings_cache(redis, current_user.id)
         return cast(
             UserSettingsResponse, UserSettingsResponse.model_validate(user_settings)
+        )
+    except DuplicateProviderNameError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
         )
     except UserException as e:
         raise HTTPException(

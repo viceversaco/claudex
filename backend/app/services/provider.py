@@ -4,53 +4,72 @@ if TYPE_CHECKING:
     from app.models.db_models import UserSettings
 
 
-def _get_attr(obj: Any, key: str, default: Any = None) -> Any:
-    if hasattr(obj, key):
-        return getattr(obj, key)
-    if isinstance(obj, dict):
-        return obj.get(key, default)
-    return default
+def _get_custom_providers(user_settings: "UserSettings") -> list[dict[str, Any]]:
+    providers = getattr(user_settings, "custom_providers", None)
+    if providers is None:
+        return []
+    return cast(list[dict[str, Any]], providers)
 
 
 class ProviderService:
+    def _is_model_enabled(self, provider: dict[str, Any], model_id: str) -> bool:
+        for model in provider.get("models", []):
+            if model.get("model_id") == model_id:
+                return bool(model.get("enabled", True))
+        return False
+
     def get_all_models(self, user_settings: "UserSettings") -> list[dict[str, Any]]:
         result: list[dict[str, Any]] = []
-        for provider in user_settings.custom_providers or []:
-            if not _get_attr(provider, "enabled", True) or not _get_attr(
-                provider, "auth_token"
-            ):
+        for provider in _get_custom_providers(user_settings):
+            if not provider.get("enabled", True):
                 continue
-            provider_id = _get_attr(provider, "id")
-            provider_name = _get_attr(provider, "name")
-            provider_type = _get_attr(provider, "provider_type", "custom")
-            if hasattr(provider_type, "value"):
-                provider_type = provider_type.value
-            for model in _get_attr(provider, "models", []):
-                if _get_attr(model, "enabled", True):
-                    result.append(
-                        {
-                            "model_id": f"{provider_id}:{_get_attr(model, 'model_id')}",
-                            "name": _get_attr(model, "name"),
-                            "provider_id": provider_id,
-                            "provider_name": provider_name,
-                            "provider_type": provider_type,
-                        }
-                    )
+            provider_id = provider.get("id")
+            provider_name = provider.get("name")
+            raw_provider_type = provider.get("provider_type", "custom")
+            provider_type = (
+                raw_provider_type.value
+                if hasattr(raw_provider_type, "value")
+                else raw_provider_type
+            )
+            for model in provider.get("models", []):
+                if not model.get("enabled", True):
+                    continue
+                model_id = model.get("model_id")
+                result.append(
+                    {
+                        "model_id": f"{provider_id}:{model_id}",
+                        "name": model.get("name"),
+                        "provider_id": provider_id,
+                        "provider_name": provider_name,
+                        "provider_type": provider_type,
+                    }
+                )
         return result
 
     def find_provider_by_id(
         self, user_settings: "UserSettings", provider_id: str
     ) -> dict[str, Any] | None:
-        for provider in user_settings.custom_providers or []:
-            if _get_attr(provider, "id") == provider_id:
-                return cast(dict[str, Any], provider)
+        for provider in _get_custom_providers(user_settings):
+            if provider.get("id") == provider_id:
+                return provider
         return None
 
     def get_provider_for_model(
         self, user_settings: "UserSettings", model_id: str
     ) -> tuple[dict[str, Any] | None, str]:
-        if ":" not in model_id:
-            return None, model_id
-        provider_id, actual_model_id = model_id.split(":", 1)
-        provider = self.find_provider_by_id(user_settings, provider_id)
-        return provider, actual_model_id
+        if ":" in model_id:
+            provider_id, actual_model_id = model_id.split(":", 1)
+            provider = self.find_provider_by_id(user_settings, provider_id)
+            if provider and provider.get("enabled", True):
+                if self._is_model_enabled(provider, actual_model_id):
+                    return provider, actual_model_id
+            return None, actual_model_id
+
+        for provider in _get_custom_providers(user_settings):
+            if not provider.get("enabled", True):
+                continue
+            for model in provider.get("models", []):
+                if model.get("enabled", True) and model.get("model_id") == model_id:
+                    return provider, model_id
+
+        return None, model_id

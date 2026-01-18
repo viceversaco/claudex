@@ -27,6 +27,7 @@ from app.models.schemas import (
     CursorPaginatedMessages,
     PaginatedChats,
     PaginationParams,
+    ProviderType,
 )
 from app.models.types import ChatCompletionResult, MessageAttachmentDict
 from app.prompts.system_prompt import build_system_prompt_for_chat
@@ -69,6 +70,7 @@ class ChatService(BaseDbService[Chat]):
         self.storage_service = storage_service
         self.user_service = user_service
         self.message_service = MessageService(session_factory=self._session_factory)
+        self._provider_service = ProviderService()
 
     @property
     def session_factory(self) -> SessionFactoryType:
@@ -743,8 +745,7 @@ class ChatService(BaseDbService[Chat]):
         if not user_settings:
             return False
 
-        provider_service = ProviderService()
-        new_provider, _ = provider_service.get_provider_for_model(
+        new_provider, _ = self._provider_service.get_provider_for_model(
             user_settings, new_model_id
         )
         new_provider_type = new_provider.get("provider_type") if new_provider else None
@@ -756,14 +757,14 @@ class ChatService(BaseDbService[Chat]):
         if not last_message or not last_message.model_id:
             return False
 
-        prev_provider, _ = provider_service.get_provider_for_model(
+        prev_provider, _ = self._provider_service.get_provider_for_model(
             user_settings, last_message.model_id
         )
         prev_provider_type = (
             prev_provider.get("provider_type") if prev_provider else None
         )
 
-        if prev_provider_type in ["openrouter", "custom"]:
+        if prev_provider_type != ProviderType.ANTHROPIC.value:
             logger.info(
                 "Session cleaning needed for chat %s: switching from %s to %s",
                 chat_id,

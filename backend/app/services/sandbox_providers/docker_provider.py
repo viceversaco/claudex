@@ -86,7 +86,9 @@ class LocalDockerProvider(SandboxProvider):
             router_name = f"sandbox-{sandbox_id}-{port}"
             subdomain = f"{router_name}.{self.config.sandbox_domain}"
             labels[f"traefik.http.routers.{router_name}.rule"] = f"Host(`{subdomain}`)"
-            labels[f"traefik.http.routers.{router_name}.entrypoints"] = self.config.traefik_entrypoint
+            labels[f"traefik.http.routers.{router_name}.entrypoints"] = (
+                self.config.traefik_entrypoint
+            )
             labels[f"traefik.http.routers.{router_name}.tls"] = "true"
             labels[f"traefik.http.routers.{router_name}.service"] = router_name
             labels[f"traefik.http.services.{router_name}.loadbalancer.server.port"] = (

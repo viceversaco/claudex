@@ -7,11 +7,11 @@ from typing import cast
 from uuid import UUID
 
 from cryptography.fernet import Fernet
-from fastapi import Depends, HTTPException, status, Query
+from fastapi import Depends, HTTPException, Query, status
 from fastapi_users.password import PasswordHelper
 from jose import jwt
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db.session import get_db
 from ..models.db_models import User
@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 
 
 def _get_fernet_key() -> bytes:
-    # Derive a 32-byte key from SECRET_KEY using SHA256, then base64 encode for Fernet
     key_bytes = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
     return base64.urlsafe_b64encode(key_bytes)
 

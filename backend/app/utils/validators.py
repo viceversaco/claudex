@@ -31,12 +31,6 @@ def validate_model_api_keys(
     )
 
     if not provider:
-        if ":" in model_id:
-            provider_id = model_id.split(":", 1)[0]
-            raise APIKeyValidationError(
-                f"Provider '{provider_id}' not found. "
-                "Please configure it in Settings > Providers."
-            )
         raise APIKeyValidationError(
             f"No provider configured for model '{model_id}'. "
             "Please configure a provider in Settings > Providers."
@@ -45,13 +39,13 @@ def validate_model_api_keys(
     if not provider.get("enabled", True):
         raise APIKeyValidationError(f"Provider '{provider.get('name')}' is disabled.")
 
-    if not provider.get("auth_token"):
+    provider_type = provider.get("provider_type", "custom")
+    if provider_type != "custom" and not provider.get("auth_token"):
         raise APIKeyValidationError(
             f"API key is required for provider '{provider.get('name')}'. "
             "Please configure it in Settings."
         )
 
-    provider_type = provider.get("provider_type", "custom")
     if provider_type == "custom" and not provider.get("base_url"):
         raise APIKeyValidationError(
             f"Base URL is required for custom provider '{provider.get('name')}'."

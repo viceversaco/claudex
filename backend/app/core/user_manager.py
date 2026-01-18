@@ -1,6 +1,7 @@
 import logging
 import uuid
 from collections.abc import AsyncIterator
+from typing import Any
 
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
@@ -20,6 +21,76 @@ from app.services.email import email_service
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
+
+
+def _get_default_custom_providers() -> list[dict[str, Any]]:
+    return [
+        {
+            "id": "anthropic-default",
+            "name": "Anthropic",
+            "provider_type": "anthropic",
+            "base_url": None,
+            "auth_token": None,
+            "enabled": True,
+            "models": [
+                {
+                    "model_id": "claude-opus-4-5",
+                    "name": "Claude Opus 4.5",
+                    "enabled": True,
+                },
+                {
+                    "model_id": "claude-sonnet-4-5",
+                    "name": "Claude Sonnet 4.5",
+                    "enabled": True,
+                },
+                {
+                    "model_id": "claude-haiku-4-5",
+                    "name": "Claude Haiku 4.5",
+                    "enabled": True,
+                },
+            ],
+        },
+        {
+            "id": "openrouter-default",
+            "name": "OpenRouter",
+            "provider_type": "openrouter",
+            "base_url": None,
+            "auth_token": None,
+            "enabled": True,
+            "models": [
+                {
+                    "model_id": "openai/gpt-5.2",
+                    "name": "GPT-5.2",
+                    "enabled": True,
+                },
+                {
+                    "model_id": "openai/gpt-5.1-codex",
+                    "name": "GPT-5.1 Codex",
+                    "enabled": True,
+                },
+                {
+                    "model_id": "x-ai/grok-code-fast-1",
+                    "name": "Grok Code Fast",
+                    "enabled": True,
+                },
+                {
+                    "model_id": "moonshotai/kimi-k2-thinking",
+                    "name": "Kimi K2 Thinking",
+                    "enabled": True,
+                },
+                {
+                    "model_id": "minimax/minimax-m2",
+                    "name": "Minimax M2",
+                    "enabled": True,
+                },
+                {
+                    "model_id": "deepseek/deepseek-v3.2",
+                    "name": "Deepseek V3.2",
+                    "enabled": True,
+                },
+            ],
+        },
+    ]
 
 
 class UserDatabase(SQLAlchemyUserDatabase[User, uuid.UUID]):
@@ -51,6 +122,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 user_settings = UserSettings(
                     user_id=user.id,
                     github_personal_access_token=None,
+                    custom_providers=_get_default_custom_providers(),
                 )
                 session.add(user_settings)
                 await session.commit()

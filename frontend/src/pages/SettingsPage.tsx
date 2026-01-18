@@ -1,14 +1,17 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Settings as SettingsIcon, AlertCircle, FileText, FileArchive } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import type { UserSettings, UserSettingsUpdate } from '@/types';
 import {
+  queryKeys,
   useSettingsQuery,
   useUpdateSettingsMutation,
   useInfiniteChatsQuery,
   useDeleteChatMutation,
   useDeleteAllChatsMutation,
+  useModelsQuery,
 } from '@/hooks/queries';
 import { Sidebar, useLayoutSidebar } from '@/components/layout';
 import {
@@ -38,7 +41,6 @@ import { PromptsSettingsTab } from '@/components/settings/tabs/PromptsSettingsTa
 import { PromptEditDialog } from '@/components/settings/dialogs/PromptEditDialog';
 import { MarketplaceSettingsTab } from '@/components/settings/tabs/MarketplaceSettingsTab';
 import type { ApiFieldKey, CustomPrompt, CustomProvider, SandboxProviderType } from '@/types';
-import { useModelsQuery } from '@/hooks/queries';
 import { useCrudForm } from '@/hooks/useCrudForm';
 import { useTaskManagement } from '@/hooks/useTaskManagement';
 import { useFileResourceManagement } from '@/hooks/useFileResourceManagement';
@@ -116,6 +118,7 @@ const TAB_FIELDS: Record<TabKey, (keyof UserSettings)[]> = {
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const { data: models = [] } = useModelsQuery();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabKey>('general');
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
@@ -334,22 +337,22 @@ const SettingsPage: React.FC = () => {
   };
 
   const handleDeleteProvider = (providerId: string) => {
-    persistSettings(
+    void persistSettings(
       (prev) => ({
         ...prev,
         custom_providers: (prev.custom_providers || []).filter((p) => p.id !== providerId),
       }),
       { successMessage: 'Provider deleted' },
-    );
+    ).then(() => queryClient.invalidateQueries({ queryKey: [queryKeys.models] }));
   };
 
   const handleToggleProvider = (providerId: string, enabled: boolean) => {
-    persistSettings((prev) => ({
+    void persistSettings((prev) => ({
       ...prev,
       custom_providers: (prev.custom_providers || []).map((p) =>
         p.id === providerId ? { ...p, enabled } : p,
       ),
-    }));
+    })).then(() => queryClient.invalidateQueries({ queryKey: [queryKeys.models] }));
   };
 
   const handleSaveProvider = (provider: CustomProvider) => {
@@ -357,7 +360,7 @@ const SettingsPage: React.FC = () => {
     const existingIndex = providers.findIndex((p) => p.id === provider.id);
 
     if (existingIndex >= 0) {
-      persistSettings(
+      void persistSettings(
         (prev) => ({
           ...prev,
           custom_providers: (prev.custom_providers || []).map((p) =>
@@ -365,15 +368,15 @@ const SettingsPage: React.FC = () => {
           ),
         }),
         { successMessage: 'Provider updated' },
-      );
+      ).then(() => queryClient.invalidateQueries({ queryKey: [queryKeys.models] }));
     } else {
-      persistSettings(
+      void persistSettings(
         (prev) => ({
           ...prev,
           custom_providers: [...(prev.custom_providers || []), provider],
         }),
         { successMessage: 'Provider added' },
-      );
+      ).then(() => queryClient.invalidateQueries({ queryKey: [queryKeys.models] }));
     }
     setIsProviderDialogOpen(false);
     setEditingProvider(null);

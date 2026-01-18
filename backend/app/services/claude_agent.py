@@ -96,6 +96,7 @@ class ClaudeAgentService:
         self._active_transport: (
             E2BSandboxTransport | DockerSandboxTransport | ModalSandboxTransport | None
         ) = None
+        self._provider_service = ProviderService()
 
     async def __aenter__(self) -> Self:
         return self
@@ -272,8 +273,7 @@ class ClaudeAgentService:
     def _build_auth_env(
         self, model_id: str, user_settings: UserSettings
     ) -> tuple[dict[str, str], str | None]:
-        provider_service = ProviderService()
-        provider, actual_model_id = provider_service.get_provider_for_model(
+        provider, actual_model_id = self._provider_service.get_provider_for_model(
             user_settings, model_id
         )
 
@@ -293,9 +293,10 @@ class ClaudeAgentService:
             env["ANTHROPIC_BASE_URL"] = "http://127.0.0.1:3456"
             env["ANTHROPIC_AUTH_TOKEN"] = "placeholder"
         elif provider_type == "custom":
-            if auth_token and provider.get("base_url"):
-                env["ANTHROPIC_AUTH_TOKEN"] = auth_token
+            if provider.get("base_url"):
                 env["ANTHROPIC_BASE_URL"] = provider["base_url"]
+            if auth_token:
+                env["ANTHROPIC_AUTH_TOKEN"] = auth_token
 
         return env, provider_type
 
@@ -304,8 +305,7 @@ class ClaudeAgentService:
             session_factory=self.session_factory
         ).get_user_settings(user.id)
 
-        provider_service = ProviderService()
-        _, actual_model_id = provider_service.get_provider_for_model(
+        _, actual_model_id = self._provider_service.get_provider_for_model(
             user_settings, model_id
         )
 
@@ -499,9 +499,7 @@ class ClaudeAgentService:
                 "append": system_prompt,
             }
 
-        # Extract actual model_id from composite format (provider_id:model_id)
-        provider_service = ProviderService()
-        _, actual_model_id = provider_service.get_provider_for_model(
+        _, actual_model_id = self._provider_service.get_provider_for_model(
             user_settings, model_id
         )
 
@@ -571,8 +569,7 @@ class ClaudeAgentService:
     ) -> int | None:
         try:
             env, _ = self._build_auth_env(model_id, user_settings)
-            provider_service = ProviderService()
-            _, actual_model_id = provider_service.get_provider_for_model(
+            _, actual_model_id = self._provider_service.get_provider_for_model(
                 user_settings, model_id
             )
 

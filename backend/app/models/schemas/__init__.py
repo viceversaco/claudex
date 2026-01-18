@@ -69,6 +69,7 @@ from .settings import (
     CustomEnvVar,
     CustomMcp,
     CustomSlashCommand,
+    ProviderType,
     UserSettingsBase,
     UserSettingsResponse,
 )
@@ -153,6 +154,7 @@ __all__ = [
     "CustomEnvVar",
     "CustomMcp",
     "CustomSlashCommand",
+    "ProviderType",
     "UserSettingsBase",
     "UserSettingsResponse",
     # skills

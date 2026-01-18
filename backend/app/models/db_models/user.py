@@ -18,7 +18,7 @@ from app.models.types import (
 )
 
 from app.db.base_class import Base
-from app.db.types import GUID, EncryptedString
+from app.db.types import GUID, EncryptedJSON, EncryptedString
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
@@ -74,7 +74,7 @@ class UserSettings(Base):
     codex_auth_json: Mapped[str | None] = mapped_column(EncryptedString, nullable=True)
     custom_instructions: Mapped[str | None] = mapped_column(Text, nullable=True)
     custom_providers: Mapped[list[CustomProviderDict] | None] = mapped_column(
-        JSON, nullable=True
+        EncryptedJSON, nullable=True
     )
     custom_agents: Mapped[list[CustomAgentDict] | None] = mapped_column(
         JSON, nullable=True

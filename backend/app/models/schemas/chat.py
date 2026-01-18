@@ -27,7 +27,7 @@ class MessageAttachment(MessageAttachmentBase):
 class ChatRequest(BaseModel):
     prompt: str = Field(..., min_length=1, max_length=100000)
     chat_id: UUID | None = None
-    model_id: str = Field(..., min_length=1, max_length=100)
+    model_id: str = Field(..., min_length=1, max_length=255)
     attached_files: list[UploadFile] | None = None
     permission_mode: Literal["plan", "ask", "auto"] = "auto"
     thinking_mode: str | None = Field(None, max_length=50)
@@ -59,7 +59,7 @@ class ChatBase(BaseModel):
 
 
 class ChatCreate(ChatBase):
-    model_id: str = Field(..., min_length=1, max_length=100)
+    model_id: str = Field(..., min_length=1, max_length=255)
 
 
 class ChatUpdate(BaseModel):
