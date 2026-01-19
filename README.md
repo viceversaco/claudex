@@ -142,6 +142,10 @@ docker compose down       # Stop
 docker compose logs -f    # Logs
 ```
 
+## Deployment
+
+For production deployment on a VPS, see the [Coolify Installation Guide](docs/coolify-installation-guide.md).
+
 ## API & Admin
 
 - **API Docs:** http://localhost:8080/api/v1/docs
