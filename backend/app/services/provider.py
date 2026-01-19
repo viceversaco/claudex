@@ -1,17 +1,25 @@
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
+
+from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from app.models.db_models import UserSettings
 
 
-def _get_custom_providers(user_settings: "UserSettings") -> list[dict[str, Any]]:
-    providers = getattr(user_settings, "custom_providers", None)
-    if providers is None:
-        return []
-    return cast(list[dict[str, Any]], providers)
-
-
 class ProviderService:
+    @staticmethod
+    def _get_custom_providers(user_settings: "UserSettings") -> list[dict[str, Any]]:
+        providers = getattr(user_settings, "custom_providers", None)
+        if providers is None:
+            return []
+        result: list[dict[str, Any]] = []
+        for provider in providers:
+            if isinstance(provider, BaseModel):
+                result.append(provider.model_dump())
+            else:
+                result.append(provider)
+        return result
+
     def _is_model_enabled(self, provider: dict[str, Any], model_id: str) -> bool:
         for model in provider.get("models", []):
             if model.get("model_id") == model_id:
@@ -20,7 +28,7 @@ class ProviderService:
 
     def get_all_models(self, user_settings: "UserSettings") -> list[dict[str, Any]]:
         result: list[dict[str, Any]] = []
-        for provider in _get_custom_providers(user_settings):
+        for provider in self._get_custom_providers(user_settings):
             if not provider.get("enabled", True):
                 continue
             provider_id = provider.get("id")
@@ -49,7 +57,7 @@ class ProviderService:
     def find_provider_by_id(
         self, user_settings: "UserSettings", provider_id: str
     ) -> dict[str, Any] | None:
-        for provider in _get_custom_providers(user_settings):
+        for provider in self._get_custom_providers(user_settings):
             if provider.get("id") == provider_id:
                 return provider
         return None
@@ -65,7 +73,7 @@ class ProviderService:
                     return provider, actual_model_id
             return None, actual_model_id
 
-        for provider in _get_custom_providers(user_settings):
+        for provider in self._get_custom_providers(user_settings):
             if not provider.get("enabled", True):
                 continue
             for model in provider.get("models", []):
