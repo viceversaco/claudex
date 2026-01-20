@@ -129,6 +129,7 @@ async def create_and_initialize_sandbox(
         custom_agents=user_settings.custom_agents,
         user_id=str(user.id),
         auto_compact_disabled=user_settings.auto_compact_disabled,
+        attribution_disabled=user_settings.attribution_disabled,
         custom_providers=user_settings.custom_providers,
     )
 

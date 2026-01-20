@@ -112,6 +112,7 @@ export interface UserSettings {
   custom_prompts: CustomPrompt[] | null;
   notification_sound_enabled?: boolean;
   auto_compact_disabled?: boolean;
+  attribution_disabled?: boolean;
   created_at: string;
   updated_at: string;
 }

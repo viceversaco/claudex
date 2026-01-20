@@ -533,25 +533,43 @@ class SandboxService:
         logger.info("IDE theme updated to: %s", vscode_theme)
 
     async def _setup_claude_config(
-        self, sandbox_id: str, auto_compact_disabled: bool
+        self,
+        sandbox_id: str,
+        auto_compact_disabled: bool,
+        attribution_disabled: bool,
     ) -> None:
-        if not auto_compact_disabled:
+        if not auto_compact_disabled and not attribution_disabled:
             return
 
-        claude_config_path = "/home/user/.claude.json"
-        config: dict[str, Any] = {}
+        if auto_compact_disabled:
+            claude_json_path = "/home/user/.claude.json"
+            config: dict[str, Any] = {}
+            try:
+                existing = await self.provider.read_file(sandbox_id, claude_json_path)
+                if not existing.is_binary and existing.content:
+                    config = json.loads(existing.content)
+            except Exception:
+                pass
+            config["autoCompactEnabled"] = False
+            await self.write_file(
+                sandbox_id, claude_json_path, json.dumps(config, indent=2)
+            )
 
-        try:
-            existing = await self.provider.read_file(sandbox_id, claude_config_path)
-            if not existing.is_binary and existing.content:
-                config = json.loads(existing.content)
-        except Exception:
-            pass
-
-        config["autoCompactEnabled"] = False
-        await self.write_file(
-            sandbox_id, claude_config_path, json.dumps(config, indent=2)
-        )
+        if attribution_disabled:
+            claude_dir = "/home/user/.claude"
+            settings_path = f"{claude_dir}/settings.json"
+            settings: dict[str, Any] = {}
+            await self.execute_command(sandbox_id, f"mkdir -p {claude_dir}")
+            try:
+                existing = await self.provider.read_file(sandbox_id, settings_path)
+                if not existing.is_binary and existing.content:
+                    settings = json.loads(existing.content)
+            except Exception:
+                pass
+            settings["attribution"] = {"commit": "", "pr": ""}
+            await self.write_file(
+                sandbox_id, settings_path, json.dumps(settings, indent=2)
+            )
 
     async def _setup_codex_auth(self, sandbox_id: str, codex_auth_json: str) -> None:
         codex_dir = "/home/user/.codex"
@@ -568,6 +586,7 @@ class SandboxService:
         custom_agents: list[CustomAgentDict] | None = None,
         user_id: str | None = None,
         auto_compact_disabled: bool = False,
+        attribution_disabled: bool = False,
         codex_auth_json: str | None = None,
         custom_providers: list[CustomProviderDict] | None = None,
         is_fork: bool = False,
@@ -579,7 +598,11 @@ class SandboxService:
         # Forks skip filesystem-based setup (env vars in .bashrc, config files, skills/commands/agents)
         # since these are preserved when cloning the container. Only processes need restarting.
         if not is_fork:
-            tasks.append(self._setup_claude_config(sandbox_id, auto_compact_disabled))
+            tasks.append(
+                self._setup_claude_config(
+                    sandbox_id, auto_compact_disabled, attribution_disabled
+                )
+            )
 
             if custom_env_vars:
                 tasks.append(self._add_env_vars_parallel(sandbox_id, custom_env_vars))

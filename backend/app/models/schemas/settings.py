@@ -123,6 +123,7 @@ class UserSettingsBase(BaseModel):
     installed_plugins: list[InstalledPluginSchema] | None = None
     notification_sound_enabled: bool = True
     auto_compact_disabled: bool = False
+    attribution_disabled: bool = False
 
     @field_validator(
         "custom_providers",

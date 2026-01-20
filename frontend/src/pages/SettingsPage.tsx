@@ -90,6 +90,7 @@ const createFallbackSettings = (): UserSettings => ({
   custom_prompts: null,
   notification_sound_enabled: true,
   auto_compact_disabled: false,
+  attribution_disabled: false,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 });
@@ -102,6 +103,7 @@ const TAB_FIELDS: Record<TabKey, (keyof UserSettings)[]> = {
     'sandbox_provider',
     'codex_auth_json',
     'auto_compact_disabled',
+    'attribution_disabled',
   ],
   providers: ['custom_providers'],
   marketplace: [],
@@ -204,6 +206,7 @@ const SettingsPage: React.FC = () => {
         'custom_prompts',
         'notification_sound_enabled',
         'auto_compact_disabled',
+        'attribution_disabled',
       ];
 
       for (const field of fields) {
@@ -464,6 +467,10 @@ const SettingsPage: React.FC = () => {
     persistSettings((prev) => ({ ...prev, auto_compact_disabled: disabled }));
   };
 
+  const handleAttributionDisabledChange = (disabled: boolean) => {
+    persistSettings((prev) => ({ ...prev, attribution_disabled: disabled }));
+  };
+
   const handleCodexAuthChange = (content: string | null) => {
     persistSettings((prev) => ({ ...prev, codex_auth_json: content }));
   };
@@ -624,6 +631,7 @@ const SettingsPage: React.FC = () => {
                     onDeleteAllChats={handleDeleteAllChats}
                     onNotificationSoundChange={handleNotificationSoundChange}
                     onAutoCompactDisabledChange={handleAutoCompactDisabledChange}
+                    onAttributionDisabledChange={handleAttributionDisabledChange}
                     onCodexAuthChange={handleCodexAuthChange}
                     onSandboxProviderChange={handleSandboxProviderChange}
                   />

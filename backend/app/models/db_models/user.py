@@ -98,6 +98,9 @@ class UserSettings(Base):
     auto_compact_disabled: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false", nullable=False
     )
+    attribution_disabled: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
     installed_plugins: Mapped[list[InstalledPluginDict] | None] = mapped_column(
         JSON, nullable=True
     )

@@ -18,6 +18,7 @@ interface GeneralSettingsTabProps {
   onDeleteAllChats: () => void;
   onNotificationSoundChange: (enabled: boolean) => void;
   onAutoCompactDisabledChange: (disabled: boolean) => void;
+  onAttributionDisabledChange: (disabled: boolean) => void;
   onCodexAuthChange: (content: string | null) => void;
   onSandboxProviderChange: (provider: SandboxProviderType) => void;
 }
@@ -32,6 +33,7 @@ export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
   onDeleteAllChats,
   onNotificationSoundChange,
   onAutoCompactDisabledChange,
+  onAttributionDisabledChange,
   onCodexAuthChange,
   onSandboxProviderChange,
 }) => (
@@ -165,6 +167,20 @@ export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
           <Switch
             checked={settings.auto_compact_disabled ?? false}
             onCheckedChange={onAutoCompactDisabledChange}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-text-primary dark:text-text-dark-primary">
+              Disable Attribution
+            </h3>
+            <p className="mt-0.5 text-xs text-text-tertiary dark:text-text-dark-tertiary">
+              Removes Claude attribution from commits and pull requests.
+            </p>
+          </div>
+          <Switch
+            checked={settings.attribution_disabled ?? false}
+            onCheckedChange={onAttributionDisabledChange}
           />
         </div>
       </div>

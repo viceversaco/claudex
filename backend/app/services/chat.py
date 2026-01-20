@@ -130,6 +130,7 @@ class ChatService(BaseDbService[Chat]):
         custom_slash_commands = user_settings.custom_slash_commands
         custom_agents = user_settings.custom_agents
         auto_compact_disabled = user_settings.auto_compact_disabled
+        attribution_disabled = user_settings.attribution_disabled
         codex_auth_json = user_settings.codex_auth_json
         custom_providers = user_settings.custom_providers
 
@@ -142,6 +143,7 @@ class ChatService(BaseDbService[Chat]):
             custom_agents=custom_agents,
             user_id=str(user.id),
             auto_compact_disabled=auto_compact_disabled,
+            attribution_disabled=attribution_disabled,
             codex_auth_json=codex_auth_json,
             custom_providers=custom_providers,
         )
